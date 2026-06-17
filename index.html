@@ -160,6 +160,39 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .sp.done { background: #f3f4f6; color: #4b5563; border-color: #d1d5db; }
 .sp.done.active { background: #4b5563; color: #fff; border-color: #4b5563; }
 .ep-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 10px; }
+
+/* Subtasks */
+.subtask-toggle-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; cursor: pointer; user-select: none; }
+.subtask-toggle-circle { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid #d1d5db; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.subtask-toggle-circle.active { border-color: #1976D2; background: #1976D2; }
+.subtask-toggle-circle.active::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #fff; }
+.subtask-toggle-label { font-size: 12px; font-weight: 600; color: #1E2235; }
+.subtask-section { display: none; margin-top: 10px; padding: 10px; background: #f9fafb; border-radius: 8px; border: 1px solid #e8eaef; }
+.subtask-section.open { display: block; }
+.subtask-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+.subtask-check { width: 15px; height: 15px; border: 1.5px solid #d1d5db; border-radius: 4px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.12s; }
+.subtask-check.checked { background: #4b5563; border-color: #4b5563; }
+.subtask-check.checked::after { content: '✓'; color: #fff; font-size: 8px; font-weight: 700; }
+.subtask-text { flex: 1; font-size: 12.5px; color: #1E2235; }
+.subtask-text.done { text-decoration: line-through; color: #9ca3af; }
+.subtask-remove { background: none; border: none; color: #d1d5db; cursor: pointer; font-size: 13px; padding: 2px 4px; }
+.subtask-remove:hover { color: #E53935; }
+.subtask-add-input { width: 100%; border: 1.5px dashed #d1d5db; border-radius: 6px; padding: 6px 9px; font-size: 12px; color: #1E2235; background: transparent; outline: none; margin-top: 6px; font-family: inherit; }
+.subtask-add-input:focus { border-color: #F59E0B; background: #fffbeb; }
+.subtask-add-input::placeholder { color: #c4c9d6; }
+.subtask-progress { font-size: 11px; color: #8a8fa8; margin-top: 6px; display: flex; align-items: center; gap: 7px; font-weight: 600; }
+.subtask-progress-bar { flex: 1; height: 5px; background: #eef0f4; border-radius: 3px; overflow: hidden; max-width: 70px; }
+.subtask-progress-fill { height: 100%; background: #1976D2; border-radius: 3px; transition: width 0.2s; }
+
+.card-subtask-list { margin: 10px 0 2px 2px; padding-left: 10px; border-left: 1.5px dashed #e0e3ec; display: flex; flex-direction: column; gap: 6px; }
+.card-subtask-row { display: flex; align-items: flex-start; gap: 8px; position: relative; }
+.card-subtask-row::before { content: ''; position: absolute; left: -10px; top: 9px; width: 7px; height: 1.5px; background: #e0e3ec; }
+.card-subtask-circle { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid #cfd3dc; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; margin-top: 1px; background: #fff; }
+.card-subtask-circle:hover { border-color: #1976D2; }
+.card-subtask-circle.checked { background: #1976D2; border-color: #1976D2; }
+.card-subtask-circle.checked::after { content: '✓'; color: #fff; font-size: 8px; font-weight: 700; line-height: 1; }
+.card-subtask-text { font-size: 12px; color: #4b5563; line-height: 1.5; padding-top: 0px; }
+.card-subtask-text.done { text-decoration: line-through; color: #c4c9d6; }
 .ep-save { background: #1E2235; color: #fff; border: none; padding: 5px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
 .ep-save:hover { background: #E53935; }
 .ep-del { background: none; color: #E53935; border: 1px solid #ffcdd2; padding: 5px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
@@ -576,7 +609,8 @@ async function verifyWriteAndRetry(action, params, attempt=1){
         (expected.due !== undefined && (found.due||'') !== (expected.due||'')) ||
         (expected.createdAt !== undefined && expected.createdAt !== '' && (found.createdat||'').slice(0,10) !== expected.createdAt) ||
         (expected.status !== undefined && found.status !== expected.status) ||
-        (expected.title !== undefined && found.title !== expected.title);
+        (expected.title !== undefined && found.title !== expected.title) ||
+        (expected.notes !== undefined && (found.notes||'') !== (expected.notes||''));
 
       if (mismatch && attempt<=3) {
         console.warn('Update fields did not match, retrying for', taskId, {expected, found});
@@ -715,7 +749,7 @@ async function loadTasks(){
   try{
     const data = await sheetGet('getTasks');
     if(data.error) throw new Error(data.error);
-    const remoteTasks=data.map(r=>({ id:r.id, managers:parseManagers(r.person), title:r.title, status:r.status||'medium', due:r.due||'', source:r.source||'Manual', createdAt: r.createdat ? r.createdat.slice(0,10) : '' }));
+    const remoteTasks=data.map(r=>({ id:r.id, managers:parseManagers(r.person), title:r.title, status:r.status||'medium', due:r.due||'', source:r.source||'Manual', createdAt: r.createdat ? r.createdat.slice(0,10) : '', subtasks: parseSubtasksField(r.notes) }));
 
     // Protect tasks created in the last 20s that might not have landed in the
     // Sheet yet (write still in flight) — don't let a stale read wipe them.
@@ -735,6 +769,16 @@ async function loadTasks(){
 function parseManagers(raw){
   if(!raw) return [];
   return raw.split(',').map(s=>s.trim()).filter(Boolean);
+}
+// Subtasks are stored as JSON inside the Sheet's Notes column. Falls back to
+// an empty list if Notes is empty or not valid JSON (e.g. older tasks).
+function parseSubtasksField(raw){
+  if(!raw) return [];
+  try{
+    const parsed=JSON.parse(raw);
+    if(Array.isArray(parsed)) return parsed.filter(s=>s && typeof s.text==='string');
+  }catch(e){ /* not JSON subtasks, ignore */ }
+  return [];
 }
 function loadLocal(){
   try{ tasks=JSON.parse(localStorage.getItem('pg_bk')||'[]'); }catch(e){ tasks=[]; }
@@ -871,6 +915,17 @@ function buildCard(t){
       <span class="card-person-name">${assignedPeople.length ? assignedPeople.map(p=>p.name).join(', ') : 'Unassigned'}</span>
     </div>
     <div class="card-title ${t.status==='done'?'done-text':''}">${t.title}</div>
+    ${(t.subtasks&&t.subtasks.length) ? `
+      <div class="subtask-progress"><span>${t.subtasks.filter(s=>s.done).length}/${t.subtasks.length} subtasks</span><div class="subtask-progress-bar"><div class="subtask-progress-fill" style="width:${Math.round(t.subtasks.filter(s=>s.done).length/t.subtasks.length*100)}%"></div></div></div>
+      <div class="card-subtask-list">
+        ${t.subtasks.map((st,idx)=>`
+          <div class="card-subtask-row">
+            <div class="card-subtask-circle ${st.done?'checked':''}" onclick="toggleCardSubtaskDone(event,'${t.id}',${idx})"></div>
+            <span class="card-subtask-text ${st.done?'done':''}">${st.text}</span>
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
     <div class="card-footer">
       ${dateStr?`<span class="card-date ${ov?'overdue':''}">${ov?'⚠ ':''}${dateStr}</span>`:''}
       ${t.source&&t.source!=='Manual'?`<span class="card-source">📋 ${t.source}</span>`:''}
@@ -879,6 +934,16 @@ function buildCard(t){
     <div class="card-edit-panel" id="ep-${t.id}">
       <label class="ep-label">Title</label>
       <textarea class="ep-input" id="et-${t.id}" rows="2">${t.title}</textarea>
+
+      <div class="subtask-toggle-row" onclick="toggleSubtaskSection('${t.id}',event)">
+        <div class="subtask-toggle-circle ${(t.subtasks&&t.subtasks.length)?'active':''}" id="stc-${t.id}"></div>
+        <span class="subtask-toggle-label">Has subtasks</span>
+      </div>
+      <div class="subtask-section ${(t.subtasks&&t.subtasks.length)?'open':''}" id="sts-${t.id}">
+        <div id="stl-${t.id}"></div>
+        <input class="subtask-add-input" placeholder="+ Add subtask..." onkeydown="if(event.key==='Enter')addSubtask('${t.id}',this)">
+      </div>
+
       <label class="ep-label">Assigned to</label>
       <div class="assignee-dropdown" id="ead-${t.id}">
         <button type="button" class="assignee-trigger" onclick="toggleAssigneeDropdown('${t.id}',event)">
@@ -904,6 +969,7 @@ function buildCard(t){
       <input type="date" class="ep-input" id="ec-${t.id}" value="${t.createdAt||''}" style="width:auto;">
       <label class="ep-label">Due date</label>
       <input type="date" class="ep-input" id="ed-${t.id}" value="${t.due||''}" style="width:auto;">
+
       <div class="ep-actions">
         <button class="ep-del" onclick="deleteTask('${t.id}')">Delete</button>
         <button class="ep-cancel" onclick="closeEdit('${t.id}')">Cancel</button>
@@ -912,6 +978,7 @@ function buildCard(t){
     </div>
   `;
   renderAssigneeTrigger(t.id, t.managers||[], card);
+  renderSubtaskList(t.id, t.subtasks||[], card);
   return card;
 }
 
@@ -982,12 +1049,90 @@ function closeEdit(id){
   const p=document.getElementById('ep-'+id);
   if(p) p.classList.remove('open');
   if(openEditId===id) openEditId=null;
+  delete pendingSubtasks[id];
 }
 function selectStatus(id,s,el){
   pendingStatus[id]=s;
   document.querySelectorAll(`#ep-${id} .sp`).forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
 }
+// ── SUBTASKS ──────────────────────────────────────────────────
+// Subtasks live entirely inside their parent task's edit panel — they never
+// appear as their own cards on the Kanban board. Each subtask is just
+// { text, done } — no priority, no status, no due date of its own.
+let pendingSubtasks = {};
+
+// Toggle a subtask's done state directly from the collapsed card, without
+// opening the full edit panel. Saves immediately to the Sheet.
+function toggleCardSubtaskDone(e, taskId, idx){
+  e.stopPropagation();
+  const t=tasks.find(x=>x.id===taskId);
+  if(!t || !t.subtasks || !t.subtasks[idx]) return;
+  t.subtasks[idx].done = !t.subtasks[idx].done;
+  apiPost('updateTask',{task:{id:t.id,notes:JSON.stringify(t.subtasks)}}).catch(()=>{});
+  saveLocal(); render();
+}
+
+function toggleSubtaskSection(taskId, e){
+  e.stopPropagation();
+  const t=tasks.find(x=>x.id===taskId);
+  if(!t) return;
+  const section=document.getElementById('sts-'+taskId);
+  const circle=document.getElementById('stc-'+taskId);
+  const isOpen=section.classList.contains('open');
+  if(isOpen){
+    section.classList.remove('open');
+    circle.classList.remove('active');
+  } else {
+    section.classList.add('open');
+    circle.classList.add('active');
+    if(!pendingSubtasks[taskId]) pendingSubtasks[taskId]=[...(t.subtasks||[])];
+  }
+}
+
+function renderSubtaskList(taskId, subtasks, scope){
+  const root = scope || document;
+  const listEl = root.querySelector(`[id="stl-${taskId}"]`) || document.querySelector(`[id="stl-${taskId}"]`);
+  if(!listEl) return;
+  const current = pendingSubtasks[taskId] || subtasks || [];
+  listEl.innerHTML = current.map((st,idx)=>`
+    <div class="subtask-row">
+      <div class="subtask-check ${st.done?'checked':''}" onclick="toggleSubtaskDone('${taskId}',${idx})"></div>
+      <span class="subtask-text ${st.done?'done':''}">${st.text}</span>
+      <button class="subtask-remove" onclick="removeSubtask('${taskId}',${idx})">✕</button>
+    </div>
+  `).join('');
+}
+
+function addSubtask(taskId, inp){
+  const text=inp.value.trim(); if(!text) return;
+  if(!pendingSubtasks[taskId]){
+    const t=tasks.find(x=>x.id===taskId);
+    pendingSubtasks[taskId]=[...(t?.subtasks||[])];
+  }
+  pendingSubtasks[taskId].push({text, done:false});
+  inp.value='';
+  renderSubtaskList(taskId, pendingSubtasks[taskId]);
+  // Auto-activate the toggle once at least one subtask exists
+  const circle=document.getElementById('stc-'+taskId);
+  if(circle) circle.classList.add('active');
+}
+
+function toggleSubtaskDone(taskId, idx){
+  if(!pendingSubtasks[taskId]){
+    const t=tasks.find(x=>x.id===taskId);
+    pendingSubtasks[taskId]=[...(t?.subtasks||[])];
+  }
+  pendingSubtasks[taskId][idx].done = !pendingSubtasks[taskId][idx].done;
+  renderSubtaskList(taskId, pendingSubtasks[taskId]);
+}
+
+function removeSubtask(taskId, idx){
+  if(!pendingSubtasks[taskId]) return;
+  pendingSubtasks[taskId].splice(idx,1);
+  renderSubtaskList(taskId, pendingSubtasks[taskId]);
+}
+
 function saveEdit(id){
   const t=tasks.find(x=>x.id===id); if(!t) return;
   const title=document.getElementById('et-'+id).value.trim();
@@ -1000,7 +1145,11 @@ function saveEdit(id){
   t.due=document.getElementById('ed-'+id).value;
   t.createdAt=document.getElementById('ec-'+id).value;
   delete pendingStatus[id];
-  apiPost('updateTask',{task:{id:t.id,title:t.title,status:t.status,due:t.due,person:t.managers.join(','),createdAt:t.createdAt}}).catch(()=>{});
+  if(pendingSubtasks[id] !== undefined){
+    t.subtasks = pendingSubtasks[id];
+  }
+  delete pendingSubtasks[id];
+  apiPost('updateTask',{task:{id:t.id,title:t.title,status:t.status,due:t.due,person:t.managers.join(','),createdAt:t.createdAt,notes:JSON.stringify(t.subtasks||[])}}).catch(()=>{});
   saveLocal(); render(); showToast('✓ Saved');
 }
 function moveTaskToStatus(taskId, newStatus){
