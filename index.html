@@ -288,6 +288,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 /* ── MODAL ── */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100; align-items: center; justify-content: center; }
+.who-option { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; border: 1.5px solid #e4e7ef; background: #fff; cursor: pointer; transition: border-color 0.12s, background 0.12s; }
+.who-option:hover { border-color: #1976D2; background: #f0f6ff; }
+.who-option.selected { border-color: #1976D2; background: #f0f6ff; }
+.who-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.who-name { font-size: 13px; font-weight: 600; color: #1E2235; }
 .modal-overlay.open { display: flex; }
 .modal { background: #fff; border-radius: 12px; padding: 26px; width: 460px; max-width: 94vw; }
 .modal-title { font-size: 15px; font-weight: 700; color: #1E2235; margin-bottom: 4px; }
@@ -456,6 +461,45 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       </div>
       <div id="cal-weeks"></div>
     </div>
+  </div>
+</div>
+
+<!-- Who Are You Modal (shown only once per browser) -->
+<div class="modal-overlay" id="whoModal" style="background:rgba(0,0,0,0.55);">
+  <div class="modal" style="max-width:400px;">
+    <div style="font-size:22px;margin-bottom:6px;text-align:center;">👋</div>
+    <div class="modal-title" style="font-size:17px;text-align:center;">Welcome — who are you?</div>
+
+    <!-- Main team list — populated by initWhoModal() -->
+    <div id="who-person-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
+
+    <!-- OR button -->
+    <div style="margin-bottom:10px;">
+      <div onclick="toggleWhoOr()" style="display:flex;justify-content:center;margin:4px 0 0;cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:7px;border:1.5px solid #e0e3ec;border-radius:20px;padding:6px 18px;background:#f9fafb;transition:background 0.12s;" onmouseover="this.style.background='#f0f2f5'" onmouseout="this.style.background='#f9fafb'">
+          <span style="font-size:12px;font-weight:700;color:#6b7280;letter-spacing:0.3px;">or</span>
+          <span id="who-or-chevron" style="font-size:9px;color:#9ca3af;transition:transform 0.15s;">▾</span>
+        </div>
+      </div>
+
+      <!-- Secondary list: Daniella, Sandra + Other — populated by JS, hidden by default -->
+      <div id="who-or-section" style="display:none;flex-direction:column;gap:6px;margin-top:4px;">
+        <!-- Daniella and Sandra inserted by JS -->
+        <div id="who-secondary-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+
+        <!-- Other — always last -->
+        <div class="who-option" id="who-other-trigger" onclick="toggleWhoOther()">
+          <div class="who-avatar" style="background:#d1d5db;color:#6b7280;font-size:14px;">?</div>
+          <span class="who-name" style="color:#9ca3af;">Other</span>
+          <span id="who-other-chevron" style="margin-left:auto;font-size:10px;color:#c4c9d6;transition:transform 0.15s;">▾</span>
+        </div>
+        <div id="who-other-section" style="display:none;padding:8px;background:#f9fafb;border-radius:8px;border:1px solid #e4e7ef;">
+          <input type="text" id="who-manual-input" class="m-input" placeholder="Type your full name..." style="margin-bottom:0;" onkeydown="if(event.key==='Enter')confirmWho()">
+        </div>
+      </div>
+    </div>
+
+    <button class="m-confirm" id="who-confirm-btn" onclick="confirmWho()" style="width:100%;opacity:0.4;pointer-events:none;">Enter Dashboard</button>
   </div>
 </div>
 
@@ -719,6 +763,7 @@ const PRIO_KW = {
 // ── STATE ─────────────────────────────────────────────────────
 let tasks = [];
 let filterPerson = 'all';
+let currentUser = null; // Set when user identifies themselves on first load
 let subOpen = {};
 let openEditId = null;
 let pendingStatus = {};
@@ -750,7 +795,12 @@ async function loadTasks(){
   try{
     const data = await sheetGet('getTasks');
     if(data.error) throw new Error(data.error);
-    const remoteTasks=data.map(r=>({ id:r.id, managers:parseManagers(r.person), title:r.title, status:r.status||'medium', due:r.due||'', source:r.source||'Manual', createdAt: r.createdat ? r.createdat.slice(0,10) : '', subtasks: parseSubtasksField(r.notes) }));
+    const remoteTasks=data.map(r=>({
+      id:r.id, managers:parseManagers(r.person), title:r.title, status:r.status||'medium',
+      due:r.due||'', source:r.source||'Manual', createdAt: r.createdat ? r.createdat.slice(0,10) : '',
+      subtasks: parseSubtasksField(r.notes),
+      assignedBy: r.meetingname && r.meetingname.startsWith('Assigned by: ') ? r.meetingname.replace('Assigned by: ','') : ''
+    }));
 
     // Protect tasks created in the last 20s that might not have landed in the
     // Sheet yet (write still in flight) — don't let a stale read wipe them.
@@ -916,6 +966,7 @@ function buildCard(t){
       <span class="card-person-name">${assignedPeople.length ? assignedPeople.map(p=>p.name).join(', ') : 'Unassigned'}</span>
     </div>
     <div class="card-title ${t.status==='done'?'done-text':''}">${t.title}</div>
+    ${t.assignedBy ? `<div style="font-size:11px;color:#c4c9d6;margin-top:3px;">Assigned by ${t.assignedBy}</div>` : ''}
     ${(t.subtasks&&t.subtasks.length) ? `
       <div class="subtask-progress"><span>${t.subtasks.filter(s=>s.done).length}/${t.subtasks.length} subtasks</span><div class="subtask-progress-bar"><div class="subtask-progress-fill" style="width:${Math.round(t.subtasks.filter(s=>s.done).length/t.subtasks.length*100)}%"></div></div></div>
       <div class="card-subtask-list">
@@ -1150,7 +1201,7 @@ function saveEdit(id){
     t.subtasks = pendingSubtasks[id];
   }
   delete pendingSubtasks[id];
-  apiPost('updateTask',{task:{id:t.id,title:t.title,status:t.status,due:t.due,person:t.managers.join(','),createdAt:t.createdAt,notes:JSON.stringify(t.subtasks||[])}}).catch(()=>{});
+  apiPost('updateTask',{task:{id:t.id,title:t.title,status:t.status,due:t.due,person:t.managers.join(','),createdAt:t.createdAt,notes:JSON.stringify(t.subtasks||[]),assignedBy:currentUser||''}}).catch(()=>{});
   saveLocal(); render(); showToast('✓ Saved');
 }
 function moveTaskToStatus(taskId, newStatus){
@@ -1183,7 +1234,7 @@ function createTaskAndEdit(status){
   markRecentlyCreated(t.id);
   // Save to Sheet immediately — every task that exists in the UI must exist in the Sheet.
   // It will only ever disappear if the user explicitly clicks Delete.
-  apiPost('addTask',{task:{id:t.id,title:t.title,status:t.status,due:t.due,person:t.managers.join(','),source:t.source,createdAt:t.createdAt}});
+  apiPost('addTask',{task:{id:t.id,title:t.title,status:t.status,due:t.due,person:t.managers.join(','),source:t.source,createdAt:t.createdAt,assignedBy:currentUser||''}});
   render();
   setTimeout(()=>{
     const card = document.getElementById('card-'+t.id);
@@ -1208,7 +1259,7 @@ function addTaskFromKanban(status,inp){
   const t={id:nextId(),managers:[pid],title,status,due:'',source:'Manual',createdAt:todayStr()};
   tasks.push(t);
   markRecentlyCreated(t.id);
-  apiPost('addTask',{task:{...t,person:pid}});
+  apiPost('addTask',{task:{...t,person:pid,assignedBy:currentUser||''}});
   inp.value=''; saveLocal(); render(); showToast('Task added');
 }
 
@@ -1395,7 +1446,7 @@ function addTaskForPerson(pid,inp){
   const t={id:nextId(),managers:[pid],title,status:'medium',due:'',source:'Manual',createdAt:todayStr()};
   tasks.push(t);
   markRecentlyCreated(t.id);
-  apiPost('addTask',{task:{...t,person:pid}});
+  apiPost('addTask',{task:{...t,person:pid,assignedBy:currentUser||''}});
   inp.value=''; saveLocal(); renderPersonDetail(pid); buildPersonSidebar(); showToast('Task added');
 }
 
@@ -1702,7 +1753,7 @@ async function runImport(){
       const t={id:nextId(),managers:[pid],title,status:document.getElementById('m-status').value,due:document.getElementById('m-due').value,source:'Manual',createdAt:todayStr()};
       tasks.push(t);
       markRecentlyCreated(t.id);
-      apiPost('addTask',{task:{...t,person:pid}});
+      apiPost('addTask',{task:{...t,person:pid,assignedBy:currentUser||''}});
       saveLocal(); render(); closeModal(); showToast('✓ Task added');
     }
   }catch(e){ showToast('⚠ '+e.message); console.error(e); }
@@ -1747,8 +1798,99 @@ function extractFallback(transcript, meeting){
 
 function doRefresh(){ loadTasks(); showToast('Refreshing...'); }
 
+// ── WHO ARE YOU ────────────────────────────────────────────────
+let selectedWhoName = null;
+
+function initWhoModal(){
+  const saved = localStorage.getItem('pg_currentUser');
+  if(saved){ currentUser = saved; return; }
+
+  // Build main team list from PEOPLE array
+  const mainList = document.getElementById('who-person-list');
+  if(mainList){
+    mainList.innerHTML = PEOPLE.map(p=>{
+      const initials = p.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+      return `<div class="who-option" onclick="selectWho('${p.name}',this)">
+        <div class="who-avatar" style="background:${p.color};">${initials}</div>
+        <span class="who-name">${p.name} <span style="font-weight:400;color:#9ca3af;font-size:11px;">— ${p.role}</span></span>
+      </div>`;
+    }).join('');
+  }
+
+  // Build secondary list (Daniella, Sandra) — rendered by JS, no template literals in HTML
+  const secondaryList = document.getElementById('who-secondary-list');
+  if(secondaryList){
+    const extras = ['Daniella Kuroki','Sandra Melendez'];
+    secondaryList.innerHTML = extras.map(name=>{
+      const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2);
+      return `<div class="who-option" onclick="selectWho('${name}',this)">
+        <div class="who-avatar" style="background:#6b7280;">${initials}</div>
+        <span class="who-name">${name}</span>
+      </div>`;
+    }).join('');
+  }
+
+  const modal = document.getElementById('whoModal');
+  if(modal) modal.style.display='flex';
+}
+
+function selectWho(name, el){
+  selectedWhoName = name;
+  // Deselect all options
+  document.querySelectorAll('.who-option').forEach(o=>o.classList.remove('selected'));
+  if(el) el.classList.add('selected');
+  // Enable confirm button
+  const btn = document.getElementById('who-confirm-btn');
+  if(btn){ btn.style.opacity='1'; btn.style.pointerEvents='auto'; }
+}
+
+function toggleWhoOr(){
+  const section = document.getElementById('who-or-section');
+  const chevron = document.getElementById('who-or-chevron');
+  if(!section) return;
+  const isOpen = section.style.display === 'flex';
+  section.style.display = isOpen ? 'none' : 'flex';
+  if(chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function toggleWhoOther(){
+  const section = document.getElementById('who-other-section');
+  const chevron = document.getElementById('who-other-chevron');
+  if(!section) return;
+  const isOpen = section.style.display === 'block';
+  section.style.display = isOpen ? 'none' : 'block';
+  if(chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+  if(!isOpen){
+    document.querySelectorAll('.who-option').forEach(o=>o.classList.remove('selected'));
+    selectedWhoName = null;
+    const btn = document.getElementById('who-confirm-btn');
+    if(btn){ btn.style.opacity='0.4'; btn.style.pointerEvents='none'; }
+    const inp = document.getElementById('who-manual-input');
+    if(inp){
+      inp.focus();
+      inp.oninput = ()=>{
+        selectedWhoName = inp.value.trim() || null;
+        if(btn){
+          btn.style.opacity = selectedWhoName ? '1' : '0.4';
+          btn.style.pointerEvents = selectedWhoName ? 'auto' : 'none';
+        }
+      };
+    }
+  }
+}
+
+function confirmWho(){
+  const name = selectedWhoName || (document.getElementById('who-manual-input')?.value.trim());
+  if(!name) return;
+  currentUser = name;
+  localStorage.setItem('pg_currentUser', name);
+  const modal = document.getElementById('whoModal');
+  if(modal) modal.style.display='none';
+}
+
 // ── INIT ──────────────────────────────────────────────────────
 buildPersonFilter();
+initWhoModal();
 loadTasks();
 setInterval(()=>{ if(USE_SHEETS) loadTasks(); }, 60000);
 </script>
