@@ -1958,7 +1958,14 @@ function extractFallback(transcript, meeting){
   return out;
 }
 
-function doRefresh(){ loadTasks(); showToast('Refreshing...'); }
+function doRefresh(){
+  if(openEditId){
+    showToast('⚠ Close the edit panel first');
+    return;
+  }
+  loadTasks();
+  showToast('Refreshing...');
+}
 
 // ── WHO ARE YOU ────────────────────────────────────────────────
 let selectedWhoName = null;
@@ -2054,7 +2061,9 @@ function confirmWho(){
 buildPersonFilter();
 initWhoModal();
 loadTasks();
-setInterval(()=>{ if(USE_SHEETS) loadTasks(); }, 60000);
+setInterval(()=>{
+  if(USE_SHEETS && !openEditId) loadTasks();
+}, 60000);
 </script>
 </body>
 </html>
