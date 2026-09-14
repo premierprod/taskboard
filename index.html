@@ -11,8 +11,56 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* ── HEADER ── */
 .header { background: #1E2235; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 52px; position: sticky; top: 0; z-index: 50; }
 .header-left { display: flex; align-items: center; gap: 10px; }
-.header-dot { width: 9px; height: 9px; background: #E53935; border-radius: 50%; }
+.header-dot { width: 9px; height: 9px; background: #E53935; border-radius: 50%; flex-shrink: 0; }
 .header-title { color: #fff; font-size: 14px; font-weight: 600; letter-spacing: 0.2px; }
+.header-user-name { color: #fff; font-size: 18px; font-weight: 700; letter-spacing: -0.3px; line-height: 1.1; }
+.header-task-board-row { display: flex; align-items: center; gap: 8px; margin-top: 1px; }
+.header-task-board-text { color: rgba(255,255,255,0.5); font-size: 11px; font-weight: 500; letter-spacing: 0.3px; text-transform: uppercase; }
+
+/* Status pill — next to "Task Board" */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px; padding: 2px 9px 2px 6px;
+  cursor: pointer; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.9);
+  transition: background 0.15s; position: relative; user-select: none;
+  letter-spacing: 0.1px;
+}
+.status-pill:hover { background: rgba(255,255,255,0.18); }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.status-dot.active  { background: #22c55e; box-shadow: 0 0 6px #22c55e99; }
+.status-dot.busy    { background: #3b82f6; box-shadow: 0 0 6px #3b82f699; }
+.status-dot.ooo     { background: #9ca3af; }
+.status-dot.custom  { background: #F59E0B; box-shadow: 0 0 6px #F59E0B99; }
+
+/* Status dropdown */
+.status-menu {
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 200;
+  background: #1a1f35; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px; padding: 6px 0; min-width: 200px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+}
+.status-menu.hidden { display: none; }
+.status-menu-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; font-size: 13px; font-weight: 500;
+  color: rgba(255,255,255,0.85); cursor: pointer; transition: background 0.1s;
+}
+.status-menu-item:hover { background: rgba(255,255,255,0.07); }
+.status-menu-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 4px 0; }
+.status-custom-input {
+  width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; padding: 7px 11px; font-size: 12px; color: #fff;
+  outline: none; font-family: inherit; box-sizing: border-box;
+}
+.status-custom-input::placeholder { color: rgba(255,255,255,0.3); }
+.status-custom-input:focus { border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.12); }
+
+/* Status badge shown next to other people's names */
+.user-status-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10.5px; color: #9ca3af; font-weight: 500;
+}
 .header-right { display: flex; align-items: center; gap: 10px; }
 .sync-badge { font-size: 11px; color: #8a8fa8; }
 .btn-import { background: #E53935; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
@@ -289,6 +337,34 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* ── MODAL ── */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100; align-items: center; justify-content: center; }
 .who-option { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; border: 1.5px solid #e4e7ef; background: #fff; cursor: pointer; transition: border-color 0.12s, background 0.12s; }
+
+/* Admin panel */
+.admin-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 5px 10px; font-size: 12px; color: rgba(255,255,255,0.7); cursor: pointer; transition: background 0.15s; margin-left: 6px; }
+.admin-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+.admin-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-start; justify-content: center; padding-top: 60px; overflow-y: auto; }
+.admin-overlay.open { display: flex; }
+.admin-panel { background: #fff; border-radius: 14px; width: 100%; max-width: 600px; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); margin-bottom: 40px; }
+.admin-title { font-size: 17px; font-weight: 700; color: #1E2235; margin-bottom: 4px; }
+.admin-sub { font-size: 12px; color: #9ca3af; margin-bottom: 20px; }
+.admin-section { margin-bottom: 24px; }
+.admin-section-title { font-size: 11px; font-weight: 700; color: #8a8fa8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+.admin-person-row { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #e4e7ef; border-radius: 8px; margin-bottom: 6px; }
+.admin-person-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.admin-person-info { flex: 1; }
+.admin-person-name { font-size: 13px; font-weight: 600; color: #1E2235; }
+.admin-person-role { font-size: 11px; color: #9ca3af; }
+.admin-person-bday { font-size: 11px; color: #6b7280; margin-top: 1px; }
+.admin-edit-btn { font-size: 11px; padding: 4px 10px; border: 1px solid #e0e3ec; border-radius: 6px; background: #fff; color: #6b7280; cursor: pointer; }
+.admin-edit-btn:hover { border-color: #1976D2; color: #1976D2; }
+.admin-del-btn { font-size: 11px; padding: 4px 8px; border: 1px solid #fecaca; border-radius: 6px; background: #fff; color: #E53935; cursor: pointer; }
+.admin-del-btn:hover { background: #fff0f0; }
+.admin-input { width: 100%; border: 1.5px solid #e0e3ec; border-radius: 8px; padding: 8px 11px; font-size: 13px; color: #1E2235; outline: none; font-family: inherit; box-sizing: border-box; margin-bottom: 8px; }
+.admin-input:focus { border-color: #1976D2; }
+.admin-input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.admin-save-btn { background: #1E2235; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.admin-save-btn:hover { background: #2d3452; }
+.admin-add-btn { background: #f4f5f7; color: #1E2235; border: 1.5px dashed #d1d5db; border-radius: 8px; padding: 10px; width: 100%; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 4px; }
+.admin-add-btn:hover { background: #eef0f4; }
 .who-option:hover { border-color: #1976D2; background: #f0f6ff; }
 .who-option.selected { border-color: #1976D2; background: #f0f6ff; }
 .who-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
@@ -543,10 +619,32 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <div class="header">
   <div class="header-left">
     <div class="header-dot"></div>
-    <span class="header-title">PREMIER GROUP — Task Board</span>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span id="header-title" style="color:#fff;font-size:17px;font-weight:700;letter-spacing:-0.2px;">PREMIER GROUP</span>
+      <span style="color:rgba(255,255,255,0.25);font-size:15px;font-weight:300;">|</span>
+      <span style="color:rgba(255,255,255,0.45);font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;">Task Board</span>
+      <div id="status-pill-wrap" style="display:none;position:relative;">
+        <div id="status-pill" onclick="toggleStatusMenu(event)" class="status-pill">
+          <span id="status-dot" class="status-dot active"></span>
+          <span id="status-label">Active</span>
+          <span style="font-size:8px;opacity:0.5;margin-left:1px;">▾</span>
+        </div>
+        <div id="status-menu" class="status-menu hidden">
+          <div class="status-menu-item" onclick="setStatus('active')"><span class="status-dot active"></span> Active</div>
+          <div class="status-menu-item" onclick="setStatus('busy')"><span class="status-dot busy"></span> Busy</div>
+          <div class="status-menu-item" onclick="setStatus('ooo')"><span class="status-dot ooo"></span> Out of Office</div>
+          <div class="status-menu-divider"></div>
+          <div style="padding:6px 12px 10px;">
+            <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:5px;font-weight:600;letter-spacing:0.3px;">CUSTOM STATUS</div>
+            <input id="status-custom-input" class="status-custom-input" placeholder="What are you up to?" onkeydown="if(event.key==='Enter')setCustomStatus(this.value)">
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="header-right">
     <span class="sync-badge" id="syncBadge">—</span>
+    <button id="admin-gear-btn" class="admin-btn" onclick="openAdminPanel()" style="display:none;">⚙ Admin</button>
     <button class="btn-refresh" onclick="doRefresh()">↻ Refresh</button>
     <button class="btn-import" onclick="openModal()">+ Import</button>
   </div>
@@ -665,6 +763,60 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   </div>
 </div>
 
+<!-- Admin Panel (Estefany only) -->
+<div class="admin-overlay" id="adminOverlay" onclick="closeAdminPanel(event)">
+  <div class="admin-panel" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+      <div>
+        <div class="admin-title">⚙ Team Administration</div>
+        <div class="admin-sub">Manage team members and birthdays — visible only to you</div>
+      </div>
+      <button onclick="closeAdminPanel()" style="background:none;border:none;font-size:18px;color:#9ca3af;cursor:pointer;padding:0;">✕</button>
+    </div>
+
+    <!-- People list -->
+    <div class="admin-section">
+      <div class="admin-section-title">Team Members</div>
+      <div id="admin-people-list"></div>
+      <button class="admin-add-btn" onclick="showAddPersonForm()">+ Add new person</button>
+    </div>
+
+    <!-- Edit/Add person form (hidden by default) -->
+    <div id="admin-person-form" style="display:none;">
+      <div class="admin-section-title" id="admin-form-title">Edit Person</div>
+      <input class="admin-input" id="af-name" placeholder="Full name (e.g. Paula Garcia)">
+      <input class="admin-input" id="af-id" placeholder="ID — lowercase, no spaces (e.g. paula)">
+      <div class="admin-input-row">
+        <input class="admin-input" id="af-role" placeholder="Role (e.g. Permits)">
+        <select class="admin-input" id="af-type">
+          <option value="manager">Manager</option>
+          <option value="sub">Sub (reports to someone)</option>
+        </select>
+      </div>
+      <select class="admin-input" id="af-parent">
+        <option value="">— Reports to (if sub) —</option>
+      </select>
+      <div class="admin-input-row">
+        <input class="admin-input" id="af-color" type="color" value="#6b7280" style="height:40px;padding:4px;">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280;">Color</div>
+      </div>
+      <div class="admin-section-title" style="margin-top:8px;">Birthday (optional)</div>
+      <div class="admin-input-row">
+        <select class="admin-input" id="af-bday-month">
+          <option value="">Month</option>
+          ${['January','February','March','April','May','June','July','August','September','October','November','December'].map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}
+        </select>
+        <input class="admin-input" id="af-bday-day" type="number" placeholder="Day (1-31)" min="1" max="31">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="admin-save-btn" onclick="savePersonForm()">Save</button>
+        <button onclick="cancelPersonForm()" style="background:none;border:1px solid #e0e3ec;border-radius:8px;padding:10px 16px;font-size:13px;cursor:pointer;color:#6b7280;">Cancel</button>
+        <button id="af-delete-btn" onclick="deletePersonFromForm()" style="display:none;margin-left:auto;background:none;border:1px solid #fecaca;border-radius:8px;padding:10px 16px;font-size:13px;cursor:pointer;color:#E53935;">Delete person</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Import Modal -->
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
   <div class="modal">
@@ -734,6 +886,29 @@ async function sheetGet(action) {
 // local state is already updated optimistically and the Sheet catches up
 // on the next periodic sync.
 let _iframeCounter = 0;
+// ── SHEET WRITE — uses fetch(no-cors) as primary method (more reliable than
+// iframe form POST because the browser won't cancel it when navigating or
+// when the iframe gets cleaned up). Falls back to form POST for large payloads
+// (transcripts) that may exceed URL limits.
+async function sheetWriteViaFetch(action, params) {
+  const payload = JSON.stringify({ action, ...params });
+  try {
+    // no-cors means we can't read the response, but the request WILL reach
+    // the server — that's all we need for fire-and-forget writes.
+    await fetch(SHEET_API, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'payload=' + encodeURIComponent(payload),
+      keepalive: true  // survives page navigation / tab switching
+    });
+  } catch(e) {
+    // Fallback to iframe form POST if fetch fails
+    return sheetWriteViaForm(action, params);
+  }
+  return { success: true };
+}
+
 function sheetWriteViaForm(action, params) {
   return new Promise((resolve) => {
     const frameName = 'sheet_write_frame_' + (_iframeCounter++);
@@ -757,11 +932,6 @@ function sheetWriteViaForm(action, params) {
     document.body.appendChild(form);
     form.submit();
 
-    // Resolve quickly so the UI doesn't feel stuck, but DON'T remove the iframe
-    // right away — Apps Script writes can take 2-6+ seconds to actually hit the
-    // Sheet. Removing the iframe early can cancel the in-flight request, which
-    // is why tasks were silently failing to save. We wait much longer before
-    // cleanup, well past the typical write time.
     resolve({ success: true });
     setTimeout(() => {
       try { document.body.removeChild(form); } catch(e){}
@@ -773,9 +943,8 @@ function sheetWriteViaForm(action, params) {
 async function apiPost(action, params) {
   if (!USE_SHEETS) return { local: true };
   try {
-    const result = await sheetWriteViaForm(action, params);
-    // Verify the write actually landed in the Sheet a few seconds later.
-    // If it didn't, retry once via the JSONP path (which we can confirm).
+    // Use fetch(no-cors) for small writes — more reliable than iframe form POST
+    const result = await sheetWriteViaFetch(action, params);
     if (action === 'addTask' || action === 'updateTask' || action === 'deleteTask') {
       verifyWriteAndRetry(action, params);
     }
@@ -1394,15 +1563,15 @@ function createTaskAndEdit(status){
   tasks.push(t);
   saveLocal();
   markRecentlyCreated(t.id);
-  // Save to Sheet immediately — every task that exists in the UI must exist in the Sheet.
-  // It will only ever disappear if the user explicitly clicks Delete.
+  // Block auto-refresh immediately — before the edit panel even opens
+  openEditId = t.id;
   apiPost('addTask',{task:{id:t.id,title:t.title,status:t.status,due:t.due,person:t.managers.join(','),source:t.source,createdAt:t.createdAt,assignedBy:currentUser||''}});
   render();
   setTimeout(()=>{
     const card = document.getElementById('card-'+t.id);
     if(card){
-      const editBtn = card.querySelector('.card-edit-btn');
-      if(editBtn) editBtn.click();
+      const panel = document.getElementById('ep-'+t.id);
+      if(panel) panel.classList.add('open');
       const titleInput = document.getElementById('et-'+t.id);
       if(titleInput){ titleInput.focus(); titleInput.select(); }
       card.scrollIntoView({behavior:'smooth', block:'center'});
@@ -1444,8 +1613,8 @@ function buildPersonSidebar(){
     item.className='person-sb-item'+(selectedPerson===mgr.id?' active':'');
     item.innerHTML=`
       <div class="sb-avatar" style="background:${mgr.color}">${mgr.name.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
-      <div>
-        <div class="sb-name">${mgr.name}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="sb-name">${mgr.name}${mgr.name===currentUser?' <span class="user-status-badge" id="sb-status-'+mgr.id+'"></span>':''}</div>
         <div class="sb-role">${mgr.role}</div>
       </div>
       <div class="sb-count ${mTasks.length?'has-tasks':''}">${mTasks.length}</div>
@@ -1466,8 +1635,8 @@ function buildPersonSidebar(){
         si.className='person-sb-item is-sub'+(selectedPerson===sub.id?' active':'');
         si.innerHTML=`
           <div class="sb-avatar" style="background:${sub.color};width:24px;height:24px;font-size:9px;">${sub.name.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
-          <div>
-            <div class="sb-name" style="font-size:12px;">${sub.name}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="sb-name" style="font-size:12px;">${sub.name} ${getStatusBadgeHTML(sub.name)}</div>
             <div class="sb-role">${sub.role}</div>
           </div>
           <div class="sb-count ${sTasks.length?'has-tasks':''}">${sTasks.length}</div>
@@ -1628,7 +1797,7 @@ function renderProductivity(){
     card.innerHTML=`
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
         <div style="width:26px;height:26px;border-radius:50%;background:${p.color};display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;">${p.name.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
-        <div><div style="font-size:13px;font-weight:600;color:#1E2235;">${p.name}</div><div style="font-size:11px;color:#8a8fa8;">${p.role}</div></div>
+        <div><div style="font-size:13px;font-weight:600;color:#1E2235;">${p.name} ${getStatusBadgeHTML(p.name)}</div><div style="font-size:11px;color:#8a8fa8;">${p.role}</div></div>
       </div>
       <div class="prod-bar-row"><span class="prod-bar-label">Done</span><div class="prod-track"><div class="prod-fill" style="width:${pct(done)}%;background:#4b5563;"></div></div><span class="prod-pct">${pct(done)}%</span></div>
       <div class="prod-bar-row"><span class="prod-bar-label">Working</span><div class="prod-track"><div class="prod-fill" style="width:${pct(working)}%;background:#1976D2;"></div></div><span class="prod-pct">${pct(working)}%</span></div>
@@ -2055,14 +2224,338 @@ function confirmWho(){
   localStorage.setItem('pg_currentUser', name);
   const modal = document.getElementById('whoModal');
   if(modal) modal.style.display='none';
+  applyCurrentUser();
+}
+
+// ── STATUS SYSTEM (synced to Sheet so everyone sees everyone's status) ──
+const STATUS_CONFIG = {
+  active: { label: 'Active',        cls: 'active' },
+  busy:   { label: 'Busy',          cls: 'busy'   },
+  ooo:    { label: 'Out of Office', cls: 'ooo'    },
+};
+
+// All statuses fetched from Sheet, keyed by name
+let allUserStatuses = {};
+
+async function loadAllUserStatuses(){
+  try {
+    const data = await sheetGet('getUserStatuses');
+    if(Array.isArray(data)){
+      allUserStatuses = {};
+      data.forEach(s=>{ allUserStatuses[s.name] = s; });
+    }
+  } catch(e) { /* non-critical */ }
+}
+
+function applyCurrentUser(){
+  if(!currentUser) return;
+
+  // Update header name
+  const titleEl = document.getElementById('header-title');
+  if(titleEl) titleEl.textContent = currentUser;
+
+  // Show status pill
+  const wrap = document.getElementById('status-pill-wrap');
+  if(wrap) wrap.style.display = 'block';
+
+  // Show admin button only for Estefany
+  const adminBtn = document.getElementById('admin-gear-btn');
+  if(adminBtn) adminBtn.style.display = currentUser === ADMIN_USER ? 'inline-block' : 'none';
+
+  // Load MY status from the shared store (or localStorage as fallback)
+  const myStatus = allUserStatuses[currentUser] || {
+    status: localStorage.getItem('pg_status_' + currentUser) || 'active',
+    customText: localStorage.getItem('pg_status_custom_' + currentUser) || ''
+  };
+  applyStatus(myStatus.status, myStatus.customText, false);
+}
+
+function applyStatus(key, customText, save=true){
+  const dot   = document.getElementById('status-dot');
+  const label = document.getElementById('status-label');
+  if(!dot || !label) return;
+
+  const isCustom = (key === 'custom' && customText);
+  if(isCustom){
+    dot.className = 'status-dot custom';
+    label.textContent = customText.slice(0, 28);
+  } else {
+    const cfg = STATUS_CONFIG[key] || STATUS_CONFIG.active;
+    dot.className = 'status-dot ' + cfg.cls;
+    label.textContent = cfg.label;
+    key = key in STATUS_CONFIG ? key : 'active';
+  }
+
+  window._myStatus = { key: isCustom ? 'custom' : key, customText: isCustom ? customText : '' };
+
+  if(save && currentUser){
+    // Save to localStorage as instant fallback
+    localStorage.setItem('pg_status_' + currentUser, isCustom ? 'custom' : key);
+    if(isCustom) localStorage.setItem('pg_status_custom_' + currentUser, customText);
+    // Sync to Sheet so everyone sees it
+    apiPost('setUserStatus', { name: currentUser, status: isCustom ? 'custom' : key, customText: isCustom ? customText : '' });
+    // Update local cache immediately
+    allUserStatuses[currentUser] = { name: currentUser, status: isCustom ? 'custom' : key, customText: isCustom ? customText : '' };
+  }
+
+  closeStatusMenu();
+  buildPersonSidebar();
+  renderProductivity();
+}
+
+function setStatus(key){
+  applyStatus(key, '');
+}
+
+function setCustomStatus(text){
+  if(!text.trim()) return;
+  applyStatus('custom', text.trim());
+}
+
+function toggleStatusMenu(e){
+  e.stopPropagation();
+  const menu = document.getElementById('status-menu');
+  if(!menu) return;
+  menu.classList.toggle('hidden');
+  if(!menu.classList.contains('hidden')){
+    const inp = document.getElementById('status-custom-input');
+    const saved = window._myStatus?.customText || '';
+    if(inp){ inp.value = saved; setTimeout(()=>inp.focus(), 50); }
+  }
+}
+
+function closeStatusMenu(){
+  const menu = document.getElementById('status-menu');
+  if(menu) menu.classList.add('hidden');
+}
+
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('#status-pill-wrap')) closeStatusMenu();
+});
+
+// Returns a small badge HTML for any person based on shared status data
+function getStatusBadgeHTML(personName){
+  const s = allUserStatuses[personName];
+  if(!s) return '';
+  const isCustom = s.status === 'custom' && s.customText;
+  const dotCls = isCustom ? 'custom' : (STATUS_CONFIG[s.status]?.cls || 'active');
+  const text = isCustom ? s.customText : (STATUS_CONFIG[s.status]?.label || 'Active');
+  return `<span class="user-status-badge"><span class="status-dot ${dotCls}" style="width:6px;height:6px;display:inline-block;border-radius:50%;"></span>${text}</span>`;
+}
+
+// Keep backward compatibility
+function getMyStatusBadgeHTML(){ return getStatusBadgeHTML(currentUser); }
+
+function renderStatusBadgesEverywhere(){
+  buildPersonSidebar();
+  renderProductivity();
+}
+
+// ── ADMIN PANEL (Estefany only) ───────────────────────────────
+const ADMIN_USER = 'Estefany';
+let adminEditingId = null; // personid currently being edited (null = adding new)
+
+function openAdminPanel(){
+  renderAdminPeopleList();
+  cancelPersonForm();
+  document.getElementById('adminOverlay').classList.add('open');
+}
+
+function closeAdminPanel(e){
+  if(e && e.target !== document.getElementById('adminOverlay')) return;
+  document.getElementById('adminOverlay').classList.remove('open');
+}
+
+function renderAdminPeopleList(){
+  const list = document.getElementById('admin-people-list');
+  if(!list) return;
+  list.innerHTML = PEOPLE.map(p => {
+    const bday = allBirthdays.find(b=>b.name.toLowerCase()===p.name.toLowerCase());
+    const bdayStr = bday ? `🎂 ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][bday.month-1]} ${bday.day}` : '🎂 No birthday set';
+    const initials = p.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+    return `<div class="admin-person-row">
+      <div class="admin-person-avatar" style="background:${p.color}">${initials}</div>
+      <div class="admin-person-info">
+        <div class="admin-person-name">${p.name}</div>
+        <div class="admin-person-role">${p.role} ${p.type==='sub'&&p.subOf?'· reports to '+p.subOf:''}</div>
+        <div class="admin-person-bday">${bdayStr}</div>
+      </div>
+      <button class="admin-edit-btn" onclick="editPerson('${p.id}')">✏ Edit</button>
+    </div>`;
+  }).join('');
+}
+
+function showAddPersonForm(){
+  adminEditingId = null;
+  document.getElementById('admin-form-title').textContent = 'Add New Person';
+  document.getElementById('af-name').value = '';
+  document.getElementById('af-id').value = '';
+  document.getElementById('af-role').value = '';
+  document.getElementById('af-type').value = 'sub';
+  document.getElementById('af-color').value = '#6b7280';
+  document.getElementById('af-bday-month').value = '';
+  document.getElementById('af-bday-day').value = '';
+  document.getElementById('af-delete-btn').style.display = 'none';
+  populateParentSelect(null);
+  document.getElementById('admin-person-form').style.display = 'block';
+  document.getElementById('af-name').focus();
+}
+
+function editPerson(personId){
+  const p = PEOPLE.find(x=>x.id===personId); if(!p) return;
+  adminEditingId = personId;
+  document.getElementById('admin-form-title').textContent = 'Edit Person';
+  document.getElementById('af-name').value = p.name;
+  document.getElementById('af-id').value = p.id;
+  document.getElementById('af-role').value = p.role;
+  document.getElementById('af-type').value = p.type||'sub';
+  document.getElementById('af-color').value = p.color||'#6b7280';
+  const bday = allBirthdays.find(b=>b.name.toLowerCase()===p.name.toLowerCase());
+  document.getElementById('af-bday-month').value = bday ? bday.month : '';
+  document.getElementById('af-bday-day').value = bday ? bday.day : '';
+  document.getElementById('af-delete-btn').style.display = 'block';
+  populateParentSelect(p.subOf||'');
+  document.getElementById('admin-person-form').style.display = 'block';
+}
+
+function populateParentSelect(selectedId){
+  const sel = document.getElementById('af-parent');
+  sel.innerHTML = '<option value="">— Reports to (if sub) —</option>' +
+    PEOPLE.filter(p=>p.type==='manager').map(p=>`<option value="${p.id}" ${p.id===selectedId?'selected':''}>${p.name}</option>`).join('');
+}
+
+function cancelPersonForm(){
+  adminEditingId = null;
+  document.getElementById('admin-person-form').style.display = 'none';
+}
+
+async function savePersonForm(){
+  const name   = document.getElementById('af-name').value.trim();
+  const id     = document.getElementById('af-id').value.trim().toLowerCase().replace(/\s+/g,'');
+  const role   = document.getElementById('af-role').value.trim();
+  const type   = document.getElementById('af-type').value;
+  const parent = document.getElementById('af-parent').value;
+  const color  = document.getElementById('af-color').value;
+  const month  = document.getElementById('af-bday-month').value;
+  const day    = document.getElementById('af-bday-day').value;
+
+  if(!name||!id||!role){ alert('Name, ID and Role are required.'); return; }
+
+  const personPayload = { personid: id, name, role, type, parentid: parent, color };
+
+  if(adminEditingId){
+    personPayload.personid = adminEditingId;
+    await apiPost('updatePerson', { person: personPayload });
+    // Update local PEOPLE array
+    const idx = PEOPLE.findIndex(p=>p.id===adminEditingId);
+    if(idx!==-1) PEOPLE[idx] = { id:adminEditingId, name, role, color, type, subOf:parent, subGroup:PEOPLE[idx].subGroup, subColor:PEOPLE[idx].subColor };
+  } else {
+    await apiPost('addPerson', { person: personPayload });
+    PEOPLE.push({ id, name, role, color, type, subOf: parent });
+  }
+
+  // Save birthday if provided
+  if(month && day){
+    await apiPost('updateBirthday', { name, month: Number(month), day: Number(day) });
+    const bdayIdx = allBirthdays.findIndex(b=>b.name.toLowerCase()===name.toLowerCase());
+    if(bdayIdx!==-1) allBirthdays[bdayIdx] = { name, month: Number(month), day: Number(day) };
+    else allBirthdays.push({ name, month: Number(month), day: Number(day) });
+  }
+
+  showToast('✓ Saved');
+  cancelPersonForm();
+  renderAdminPeopleList();
+  buildPersonFilter();
+  buildPersonSidebar();
+}
+
+async function deletePersonFromForm(){
+  const p = PEOPLE.find(x=>x.id===adminEditingId); if(!p) return;
+  if(!confirm(`Delete ${p.name} from the team? This cannot be undone.`)) return;
+  await apiPost('deletePerson', { personId: adminEditingId });
+  const idx = PEOPLE.findIndex(x=>x.id===adminEditingId);
+  if(idx!==-1) PEOPLE.splice(idx,1);
+  showToast(`✓ ${p.name} removed`);
+  cancelPersonForm();
+  renderAdminPeopleList();
+  buildPersonFilter();
+  buildPersonSidebar();
+}
+
+// ── BIRTHDAY NOTIFICATIONS ────────────────────────────────────
+let allBirthdays = [];
+
+async function loadBirthdays(){
+  try {
+    const data = await sheetGet('getBirthdays');
+    if(Array.isArray(data)) allBirthdays = data;
+  } catch(e) {}
+}
+
+async function checkBirthdayNotifications(){
+  if(!('Notification' in window)) return;
+  if(allBirthdays.length === 0) return;
+
+  const now = new Date();
+  const todayMonth = now.getMonth() + 1;
+  const todayDay   = now.getDate();
+  const todayKey   = `${now.getFullYear()}-${todayMonth}-${todayDay}`;
+
+  // Request permission once if not yet granted
+  if(Notification.permission === 'default'){
+    await Notification.requestPermission();
+  }
+  if(Notification.permission !== 'granted') return;
+
+  allBirthdays.forEach(b => {
+    const isToday    = b.month === todayMonth && b.day === todayDay;
+    const isTomorrow = (() => {
+      const tom = new Date(now); tom.setDate(tom.getDate() + 1);
+      return b.month === tom.getMonth()+1 && b.day === tom.getDate();
+    })();
+
+    if(!isToday && !isTomorrow) return;
+
+    const notifKey = `pg_bday_notif_${b.name}_${todayKey}_${isToday?'today':'tomorrow'}`;
+    if(localStorage.getItem(notifKey)) return; // already sent today
+
+    let title, body;
+    if(isToday && b.name === currentUser){
+      title = '🎂 Happy Birthday!';
+      body  = 'Wishing you an amazing day — from the Production Team ❤️';
+    } else if(isToday){
+      title = `🎉 Today is ${b.name}'s birthday!`;
+      body  = 'Send them some love today 🎂';
+    } else {
+      title = `🎂 Tomorrow is ${b.name}'s birthday!`;
+      body  = `Don't forget to wish ${b.name} a happy birthday tomorrow!`;
+    }
+
+    new Notification(title, {
+      body,
+      icon: 'https://premierprod.github.io/taskboard/favicon.ico',
+      badge: 'https://premierprod.github.io/taskboard/favicon.ico',
+      tag: notifKey, // prevents duplicate popups
+    });
+
+    // Mark as sent so it doesn't repeat every 60s
+    localStorage.setItem(notifKey, '1');
+  });
 }
 
 // ── INIT ──────────────────────────────────────────────────────
 buildPersonFilter();
 initWhoModal();
+loadAllUserStatuses().then(()=>{ applyCurrentUser(); });
+loadBirthdays().then(()=>{ checkBirthdayNotifications(); });
 loadTasks();
-setInterval(()=>{
-  if(USE_SHEETS && !openEditId) loadTasks();
+setInterval(async ()=>{
+  if(USE_SHEETS && !openEditId){
+    await loadAllUserStatuses();
+    await loadBirthdays();
+    checkBirthdayNotifications();
+    loadTasks();
+  }
 }, 60000);
 </script>
 </body>
