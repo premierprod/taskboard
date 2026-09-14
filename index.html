@@ -2,8 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Premier Group — Task Board</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1E2235">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PG Tasks">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #1E2235; min-height: 100vh; }
@@ -337,6 +343,53 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* ── MODAL ── */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100; align-items: center; justify-content: center; }
 .who-option { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; border: 1.5px solid #e4e7ef; background: #fff; cursor: pointer; transition: border-color 0.12s, background 0.12s; }
+
+/* ── SUPERINTENDENT MOBILE VIEW ── */
+#super-view { display:none; flex-direction:column; min-height:100vh; background:#1E2235; }
+.super-header { padding:16px 16px 10px; background:#1E2235; position:sticky; top:0; z-index:10; }
+.super-header-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.super-name { color:#fff; font-size:18px; font-weight:700; }
+.super-role { color:rgba(255,255,255,0.4); font-size:10px; letter-spacing:0.5px; }
+.super-tabs { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+.super-tabs::-webkit-scrollbar { display:none; }
+.super-tab { flex-shrink:0; border-radius:20px; padding:6px 14px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px; border:none; transition:opacity 0.15s; }
+.super-tab-count { font-size:9px; font-weight:800; padding:1px 6px; border-radius:10px; background:rgba(255,255,255,0.25); color:#fff; }
+.super-tab.active-high { background:#E53935; color:#fff; }
+.super-tab.active-working { background:#1976D2; color:#fff; }
+.super-tab.active-medium { background:#F59E0B; color:#fff; }
+.super-tab.active-low { background:#16a34a; color:#fff; }
+.super-tab.active-done { background:#6b7280; color:#fff; }
+.super-tab.inactive { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.5); }
+.super-task-list { padding:12px 14px 80px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; }
+.super-task-card { background:#fff; border-radius:12px; padding:13px 14px; display:flex; align-items:center; gap:11px; }
+.super-task-bar { width:4px; border-radius:4px; flex-shrink:0; align-self:stretch; }
+.super-task-bar.high { background:#E53935; }
+.super-task-bar.working { background:#1976D2; }
+.super-task-bar.medium { background:#F59E0B; }
+.super-task-bar.low { background:#16a34a; }
+.super-task-body { flex:1; min-width:0; }
+.super-task-title { font-size:13px; font-weight:600; color:#1E2235; line-height:1.35; margin-bottom:4px; }
+.super-task-meta { font-size:10px; color:#9ca3af; }
+.super-task-meta.overdue { color:#E53935; font-weight:600; }
+.super-task-assignee { font-size:10px; color:#6b7280; margin-top:2px; }
+.super-done-btn { width:28px; height:28px; border-radius:50%; border:2px solid currentColor; flex-shrink:0; cursor:pointer; background:none; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; transition:all 0.15s; }
+.super-done-btn.high { color:#E53935; }
+.super-done-btn.working { color:#1976D2; }
+.super-done-btn.medium { color:#F59E0B; }
+.super-done-btn.low { color:#16a34a; }
+.super-done-btn.done { background:#6b7280; border-color:#6b7280; color:#fff; }
+.super-empty { text-align:center; padding:40px 20px; color:rgba(255,255,255,0.25); font-size:13px; }
+.super-fab { position:fixed; bottom:24px; right:20px; background:#E53935; color:#fff; border:none; border-radius:50%; width:54px; height:54px; font-size:24px; cursor:pointer; box-shadow:0 4px 16px rgba(229,57,53,0.4); display:flex; align-items:center; justify-content:center; z-index:20; }
+
+/* Notification permission banner */
+.notif-banner { position:fixed; bottom:0; left:0; right:0; z-index:100; background:#1E2235; border-top:1px solid rgba(255,255,255,0.1); padding:16px 20px; display:flex; align-items:center; gap:12px; box-shadow:0 -4px 24px rgba(0,0,0,0.3); transform:translateY(100%); transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1); }
+.notif-banner.show { transform:translateY(0); }
+.notif-banner-icon { font-size:26px; flex-shrink:0; }
+.notif-banner-text { flex:1; }
+.notif-banner-title { color:#fff; font-size:13px; font-weight:700; margin-bottom:2px; }
+.notif-banner-sub { color:rgba(255,255,255,0.5); font-size:11px; line-height:1.4; }
+.notif-banner-btn { background:#E53935; color:#fff; border:none; border-radius:10px; padding:10px 16px; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0; white-space:nowrap; }
+.notif-banner-close { color:rgba(255,255,255,0.3); background:none; border:none; font-size:18px; cursor:pointer; flex-shrink:0; padding:4px; }
 
 /* Admin panel */
 .admin-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 5px 10px; font-size: 12px; color: rgba(255,255,255,0.7); cursor: pointer; transition: background 0.15s; margin-left: 6px; }
@@ -763,6 +816,97 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   </div>
 </div>
 
+<!-- Notification Permission Banner (supers only) -->
+<div class="notif-banner" id="notif-banner">
+  <div class="notif-banner-icon">🔔</div>
+  <div class="notif-banner-text">
+    <div class="notif-banner-title">Enable notifications</div>
+    <div class="notif-banner-sub">Get alerted instantly when a task is assigned to you — even with the app closed.</div>
+  </div>
+  <button class="notif-banner-btn" onclick="enableNotifications()">Enable</button>
+  <button class="notif-banner-close" onclick="dismissNotifBanner()">✕</button>
+</div>
+
+<!-- iOS "Add to Home Screen" guide (shown before notification banner on iOS Safari) -->
+<div class="modal-overlay" id="ios-pwa-modal" style="background:rgba(0,0,0,0.7);align-items:flex-end;">
+  <div style="background:#1E2235;border-radius:20px 20px 0 0;padding:28px 20px 40px;width:100%;max-width:480px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:36px;margin-bottom:8px;">📲</div>
+      <div style="color:#fff;font-size:17px;font-weight:700;margin-bottom:6px;">Add to Home Screen first</div>
+      <div style="color:rgba(255,255,255,0.5);font-size:13px;line-height:1.5;">To receive task notifications on iPhone, you need to add this app to your home screen. It only takes a few seconds.</div>
+    </div>
+    <!-- Step by step -->
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">
+      <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.06);border-radius:12px;padding:12px 14px;">
+        <div style="width:28px;height:28px;background:#E53935;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0;">1</div>
+        <div style="flex:1;">
+          <div style="color:#fff;font-size:13px;font-weight:600;">Tap the Share button</div>
+          <div style="color:rgba(255,255,255,0.4);font-size:11px;">The box with an arrow at the bottom of Safari</div>
+        </div>
+        <div style="font-size:22px;">⬆️</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.06);border-radius:12px;padding:12px 14px;">
+        <div style="width:28px;height:28px;background:#E53935;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0;">2</div>
+        <div style="flex:1;">
+          <div style="color:#fff;font-size:13px;font-weight:600;">Tap "Add to Home Screen"</div>
+          <div style="color:rgba(255,255,255,0.4);font-size:11px;">Scroll down in the share menu</div>
+        </div>
+        <div style="font-size:22px;">＋</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.06);border-radius:12px;padding:12px 14px;">
+        <div style="width:28px;height:28px;background:#E53935;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0;">3</div>
+        <div style="flex:1;">
+          <div style="color:#fff;font-size:13px;font-weight:600;">Open from the home screen</div>
+          <div style="color:rgba(255,255,255,0.4);font-size:11px;">Tap the PG Tasks icon to open and enable notifications</div>
+        </div>
+        <div style="font-size:22px;">🔔</div>
+      </div>
+    </div>
+    <button onclick="dismissIosPwaModal()" style="width:100%;background:rgba(255,255,255,0.1);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;">Got it — I'll do this now</button>
+    <button onclick="dismissIosPwaModal(true)" style="width:100%;background:none;color:rgba(255,255,255,0.3);border:none;padding:10px;font-size:12px;cursor:pointer;margin-top:4px;">Skip for now</button>
+  </div>
+</div>
+
+<!-- Superintendent View (Nicolas, David) -->
+<div id="super-view">
+  <div class="super-header">
+    <div class="super-header-top">
+      <div>
+        <div class="super-name" id="super-name">Nicolas</div>
+        <div class="super-role">SUPERINTENDENT</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div id="super-status-dot" style="width:8px;height:8px;background:#22c55e;border-radius:50%;box-shadow:0 0 6px #22c55e88;"></div>
+        <span id="super-status-label" style="color:rgba(255,255,255,0.5);font-size:10px;">Active</span>
+      </div>
+    </div>
+    <div class="super-tabs" id="super-tabs"></div>
+  </div>
+  <div class="super-task-list" id="super-task-list"></div>
+  <button class="super-fab" onclick="openSuperAddTask()" title="Add task">+</button>
+</div>
+
+<!-- Super Add Task Modal -->
+<div class="modal-overlay" id="superAddModal" style="background:rgba(0,0,0,0.6);">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-title">New Task</div>
+    <label class="m-label">Title</label>
+    <textarea class="m-input" id="sat-title" rows="2" placeholder="What needs to be done?"></textarea>
+    <label class="m-label">Assign to</label>
+    <select class="m-input" id="sat-person">
+      <option value="">Select superintendent...</option>
+    </select>
+    <label class="m-label">Priority</label>
+    <div class="status-pills" style="margin-bottom:12px;" id="sat-status-pills"></div>
+    <label class="m-label">Due date (optional)</label>
+    <input type="date" class="m-input" id="sat-due" style="width:auto;">
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="m-confirm" onclick="saveSuperTask()" style="flex:1;">Add Task</button>
+      <button onclick="closeSuperAddTask()" style="background:none;border:1px solid #e0e3ec;border-radius:8px;padding:10px 16px;font-size:13px;cursor:pointer;color:#6b7280;">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Admin Panel (Estefany only) -->
 <div class="admin-overlay" id="adminOverlay" onclick="closeAdminPanel(event)">
   <div class="admin-panel" onclick="event.stopPropagation()">
@@ -1056,16 +1200,25 @@ async function waitForTasksToIncrease(beforeCount, maxWaitMs = 60000, intervalMs
 }
 
 const PEOPLE = [
-  { id:'chelo',     name:'Chelo',         role:'Manager',         color:'#E53935', type:'manager', subGroup:'Production',       subColor:'#E53935' },
-  { id:'estefany',  name:'Estefany',      role:'Production Assistant', color:'#EF5350', type:'sub',     subOf:'chelo' },
-  { id:'godofredo', name:'Godofredo',      role:'Manager',         color:'#7B1FA2', type:'manager', subGroup:'Permits',          subColor:'#7B1FA2' },
-  { id:'paula',     name:'Paula',          role:'Permits',         color:'#9C27B0', type:'sub',     subOf:'godofredo' },
-  { id:'ericka',    name:'Ericka Crocker', role:'Permits',         color:'#8E24AA', type:'sub',     subOf:'godofredo' },
-  { id:'adrian',    name:'Adrian Campos',  role:'Preconstruction Assistant', color:'#AB47BC', type:'sub', subOf:'godofredo' },
-  { id:'mariel',    name:'Mariel',         role:'Manager',         color:'#0F6E56', type:'manager', subGroup:'Project Managers', subColor:'#0F6E56' },
-  { id:'daniel',    name:'Daniel Farfan',  role:'Project Manager', color:'#1976D2', type:'sub',     subOf:'mariel' },
-  { id:'rafaela',   name:'Rafaela',        role:'Project Manager', color:'#1565c0', type:'sub',     subOf:'mariel' },
+  { id:'chelo',     name:'Chelo',         role:'Manager',         color:'#E53935', type:'manager', subGroup:'Production',       subColor:'#E53935', usertype:'office' },
+  { id:'estefany',  name:'Estefany',      role:'Production Assistant', color:'#EF5350', type:'sub', subOf:'chelo', usertype:'office' },
+  { id:'godofredo', name:'Godofredo',      role:'Manager',         color:'#7B1FA2', type:'manager', subGroup:'Permits',          subColor:'#7B1FA2', usertype:'office' },
+  { id:'paula',     name:'Paula',          role:'Permits',         color:'#9C27B0', type:'sub',     subOf:'godofredo', usertype:'office' },
+  { id:'ericka',    name:'Ericka Crocker', role:'Permits',         color:'#8E24AA', type:'sub',     subOf:'godofredo', usertype:'office' },
+  { id:'adrian',    name:'Adrian Campos',  role:'Preconstruction Assistant', color:'#AB47BC', type:'sub', subOf:'godofredo', usertype:'office' },
+  { id:'mariel',    name:'Mariel',         role:'Manager',         color:'#0F6E56', type:'manager', subGroup:'Project Managers', subColor:'#0F6E56', usertype:'office' },
+  { id:'daniel',    name:'Daniel Farfan',  role:'Project Manager', color:'#1976D2', type:'sub',     subOf:'mariel', usertype:'office' },
+  { id:'rafaela',   name:'Rafaela',        role:'Project Manager', color:'#1565c0', type:'sub',     subOf:'mariel', usertype:'office' },
+  // Superintendents
+  { id:'nicolas',   name:'Nicolas Jara',   role:'Superintendent',  color:'#0891b2', type:'super', usertype:'superintendent', subGroup:'Superintendents', subColor:'#0891b2' },
+  { id:'david',     name:'David Escheik',  role:'Superintendent',  color:'#0e7490', type:'super', usertype:'superintendent', subGroup:'Superintendents', subColor:'#0e7490' },
 ];
+
+// Helper: is the current user a superintendent?
+function isSuper(name){ return PEOPLE.some(p=>p.name===name && p.usertype==='superintendent'); }
+function isSuperById(id){ return PEOPLE.some(p=>p.id===id && p.usertype==='superintendent'); }
+const SUPER_IDS = PEOPLE.filter(p=>p.usertype==='superintendent').map(p=>p.id);
+const OFFICE_IDS = PEOPLE.filter(p=>p.usertype==='office').map(p=>p.id);
 
 const STATUSES = [
   { id:'high',    label:'High Priority', shortLabel:'HIGH' },
@@ -1198,6 +1351,10 @@ function saveLocal(){ localStorage.setItem('pg_bk',JSON.stringify(tasks)); }
 
 // ── RENDER ────────────────────────────────────────────────────
 function render(){
+  if(isSuperMobile()){
+    renderSuperView();
+    return;
+  }
   buildPersonFilter();
   if(currentView==='kanban') renderKanban();
   else if(currentView==='person') renderByPerson();
@@ -1207,9 +1364,13 @@ function render(){
 }
 
 function visibleTasks(){
-  if(filterPerson==='all') return tasks;
-  // A task is visible under a person's filter if they're anywhere in its managers array.
-  return tasks.filter(t=>(t.managers||[]).includes(filterPerson));
+  let base = tasks;
+  // Superintendents only see tasks assigned to superintendents (theirs + others)
+  if(currentUser && isSuper(currentUser)){
+    base = tasks.filter(t=>(t.managers||[]).some(id=>SUPER_IDS.includes(id)));
+  }
+  if(filterPerson==='all') return base;
+  return base.filter(t=>(t.managers||[]).includes(filterPerson));
 }
 
 function updateTabCounts(){
@@ -1227,7 +1388,11 @@ function buildPersonFilter(){
     wrap.appendChild(c);
   };
   mk('All','all');
-  PEOPLE.forEach(p=>mk(p.name.split(' ')[0],p.id));
+  // Superintendents only see other superintendents in the filter bar
+  const peopleToShow = (currentUser && isSuper(currentUser))
+    ? PEOPLE.filter(p=>p.usertype==='superintendent')
+    : PEOPLE;
+  peopleToShow.forEach(p=>mk(p.name.split(' ')[0],p.id));
 }
 
 // ── KANBAN ────────────────────────────────────────────────────
@@ -1520,6 +1685,7 @@ function saveEdit(id){
   const t=tasks.find(x=>x.id===id); if(!t) return;
   const title=document.getElementById('et-'+id).value.trim();
   if(title) t.title=title;
+  const prevManagers = [...(t.managers||[])];
   if(pendingAssignees[id] && pendingAssignees[id].length){
     t.managers=pendingAssignees[id];
   }
@@ -1533,6 +1699,7 @@ function saveEdit(id){
   }
   delete pendingSubtasks[id];
   apiPost('updateTask',{task:{id:t.id,title:t.title,status:t.status,due:t.due,person:t.managers.join(','),createdAt:t.createdAt,notes:JSON.stringify(t.subtasks||[]),assignedBy:currentUser||''}}).catch(()=>{});
+  notifySuperIfAssigned(t, prevManagers);
   saveLocal(); render(); showToast('✓ Saved');
 }
 function moveTaskToStatus(taskId, newStatus){
@@ -2143,10 +2310,10 @@ function initWhoModal(){
   const saved = localStorage.getItem('pg_currentUser');
   if(saved){ currentUser = saved; return; }
 
-  // Build main team list from PEOPLE array
+  // Build main team list — OFFICE only
   const mainList = document.getElementById('who-person-list');
   if(mainList){
-    mainList.innerHTML = PEOPLE.map(p=>{
+    mainList.innerHTML = PEOPLE.filter(p=>p.usertype==='office').map(p=>{
       const initials = p.name.split(' ').map(w=>w[0]).join('').slice(0,2);
       return `<div class="who-option" onclick="selectWho('${p.name}',this)">
         <div class="who-avatar" style="background:${p.color};">${initials}</div>
@@ -2155,17 +2322,30 @@ function initWhoModal(){
     }).join('');
   }
 
-  // Build secondary list (Daniella, Sandra) — rendered by JS, no template literals in HTML
+  // Build secondary list — Daniella, Sandra + Superintendents section
   const secondaryList = document.getElementById('who-secondary-list');
   if(secondaryList){
-    const extras = ['Daniella Kuroki','Sandra Melendez'];
-    secondaryList.innerHTML = extras.map(name=>{
-      const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2);
-      return `<div class="who-option" onclick="selectWho('${name}',this)">
-        <div class="who-avatar" style="background:#6b7280;">${initials}</div>
-        <span class="who-name">${name}</span>
-      </div>`;
-    }).join('');
+    const extras = [
+      { name:'Daniella Kuroki', color:'#6b7280' },
+      { name:'Sandra Melendez', color:'#6b7280' },
+    ];
+    const supers = PEOPLE.filter(p=>p.usertype==='superintendent');
+    secondaryList.innerHTML =
+      extras.map(e=>{
+        const initials = e.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+        return `<div class="who-option" onclick="selectWho('${e.name}',this)">
+          <div class="who-avatar" style="background:${e.color};">${initials}</div>
+          <span class="who-name">${e.name}</span>
+        </div>`;
+      }).join('') +
+      `<div style="font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:0.5px;padding:8px 4px 4px;text-transform:uppercase;">Superintendents</div>` +
+      supers.map(p=>{
+        const initials = p.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+        return `<div class="who-option" onclick="selectWho('${p.name}',this)">
+          <div class="who-avatar" style="background:${p.color};">${initials}</div>
+          <span class="who-name">${p.name} <span style="font-weight:400;color:#9ca3af;font-size:11px;">— ${p.role}</span></span>
+        </div>`;
+      }).join('');
   }
 
   const modal = document.getElementById('whoModal');
@@ -2268,6 +2448,30 @@ function applyCurrentUser(){
     customText: localStorage.getItem('pg_status_custom_' + currentUser) || ''
   };
   applyStatus(myStatus.status, myStatus.customText, false);
+
+  // Superintendents on mobile → activate simplified view
+  if(isSuperMobile()){
+    activateSuperView();
+  }
+
+  // Show smooth notification permission banner for supers (not a jarring browser popup)
+  if(isSuperUser()){
+    showNotifBanner();
+    // If already granted, register SW silently
+    if(Notification.permission === 'granted'){
+      registerServiceWorker();
+    }
+  }
+
+  // Rebuild person filter with correct visibility
+  buildPersonFilter();
+
+  // Load MY status from the shared store (or localStorage as fallback)
+  const myStatus = allUserStatuses[currentUser] || {
+    status: localStorage.getItem('pg_status_' + currentUser) || 'active',
+    customText: localStorage.getItem('pg_status_custom_' + currentUser) || ''
+  };
+  applyStatus(myStatus.status, myStatus.customText, false);
 }
 
 function applyStatus(key, customText, save=true){
@@ -2349,6 +2553,267 @@ function getMyStatusBadgeHTML(){ return getStatusBadgeHTML(currentUser); }
 function renderStatusBadgesEverywhere(){
   buildPersonSidebar();
   renderProductivity();
+}
+
+// ── SUPERINTENDENT VIEW ────────────────────────────────────────
+let superActiveTab = 'high';
+
+function isSuperMobile(){
+  return currentUser && isSuper(currentUser) && window.innerWidth <= 768;
+}
+
+function isSuperUser(){
+  return currentUser && isSuper(currentUser);
+}
+
+function activateSuperView(){
+  // Hide normal dashboard, show super view
+  document.getElementById('super-view').style.display='flex';
+  document.querySelector('.header').style.display='none';
+  document.querySelector('.toolbar').style.display='none';
+  const views=['view-kanban','view-person','view-productivity','view-calendar'];
+  views.forEach(v=>{ const el=document.getElementById(v); if(el) el.style.display='none'; });
+  // Set name
+  const p = PEOPLE.find(x=>x.name===currentUser);
+  document.getElementById('super-name').textContent = currentUser.split(' ')[0];
+  // Build assign dropdown
+  const sel = document.getElementById('sat-person');
+  sel.innerHTML = '<option value="">Select superintendent...</option>' +
+    PEOPLE.filter(x=>x.usertype==='superintendent').map(x=>`<option value="${x.id}">${x.name}</option>`).join('');
+  // Build status pills for add modal
+  const pills = document.getElementById('sat-status-pills');
+  if(pills) pills.innerHTML = ['high','working','medium','low'].map((s,i)=>`<div class="sp ${s} ${i===0?'active':''}" onclick="selectSuperStatus('${s}',this)">${s.toUpperCase()}</div>`).join('');
+  renderSuperView();
+}
+
+let superSelectedStatus = 'high';
+function selectSuperStatus(s, el){
+  superSelectedStatus = s;
+  document.querySelectorAll('#sat-status-pills .sp').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function renderSuperView(){
+  const myId = PEOPLE.find(p=>p.name===currentUser)?.id;
+  // Super tasks = tasks assigned to any superintendent
+  const superTasks = tasks.filter(t=>(t.managers||[]).some(id=>SUPER_IDS.includes(id)));
+
+  const counts = {};
+  ['high','working','medium','low','done'].forEach(s=>{
+    counts[s] = superTasks.filter(t=>t.status===s).length;
+  });
+
+  // Build tabs
+  const tabsEl = document.getElementById('super-tabs');
+  const tabConfig = [
+    {id:'high',    label:'High',    cls:'active-high'},
+    {id:'working', label:'Working', cls:'active-working'},
+    {id:'medium',  label:'Medium',  cls:'active-medium'},
+    {id:'low',     label:'Low',     cls:'active-low'},
+    {id:'done',    label:'Done',    cls:'active-done'},
+  ];
+  tabsEl.innerHTML = tabConfig.map(t=>`
+    <button class="super-tab ${superActiveTab===t.id ? t.cls : 'inactive'}" onclick="superSwitchTab('${t.id}')">
+      ${t.label}
+      <span class="super-tab-count">${counts[t.id]||0}</span>
+    </button>
+  `).join('');
+
+  // Build task list
+  const listEl = document.getElementById('super-task-list');
+  const filtered = superTasks.filter(t=>t.status===superActiveTab);
+
+  if(!filtered.length){
+    listEl.innerHTML = `<div class="super-empty">No ${superActiveTab} tasks right now</div>`;
+    return;
+  }
+
+  listEl.innerHTML = '';
+  filtered.forEach(t=>{
+    const card = document.createElement('div');
+    card.className = 'super-task-card';
+    const isOverdueTask = t.due && t.due < todayStr() && t.status!=='done';
+    const assignees = (t.managers||[]).map(id=>PEOPLE.find(p=>p.id===id)?.name.split(' ')[0]).filter(Boolean).join(', ');
+    card.innerHTML = `
+      <div class="super-task-bar ${t.status}"></div>
+      <div class="super-task-body">
+        <div class="super-task-title">${t.title}</div>
+        <div class="super-task-meta ${isOverdueTask?'overdue':''}">${t.due ? (isOverdueTask?'⚠ '+fmtDate(t.due)+' · overdue':fmtDate(t.due)) : 'No due date'}</div>
+        ${assignees ? `<div class="super-task-assignee">→ ${assignees}</div>` : ''}
+      </div>
+      <button class="super-done-btn ${t.status==='done'?'done':t.status}" onclick="superToggleDone('${t.id}')">${t.status==='done'?'✓':''}</button>
+    `;
+    listEl.appendChild(card);
+  });
+}
+
+function superSwitchTab(tab){
+  superActiveTab = tab;
+  renderSuperView();
+}
+
+function superToggleDone(taskId){
+  const t = tasks.find(x=>x.id===taskId); if(!t) return;
+  t.status = t.status==='done' ? 'high' : 'done';
+  apiPost('updateTask',{task:{id:t.id,status:t.status,person:(t.managers||[]).join(',')}});
+  saveLocal();
+  renderSuperView();
+}
+
+function openSuperAddTask(){
+  document.getElementById('superAddModal').style.display='flex';
+}
+function closeSuperAddTask(){
+  document.getElementById('superAddModal').style.display='none';
+}
+async function saveSuperTask(){
+  const title = document.getElementById('sat-title').value.trim();
+  const personId = document.getElementById('sat-person').value;
+  const due = document.getElementById('sat-due').value;
+  if(!title){ alert('Enter a task title.'); return; }
+  if(!personId){ alert('Select who to assign this to.'); return; }
+  const t = {id:nextId(), managers:[personId], title, status:superSelectedStatus, due, source:'Manual', createdAt:todayStr(), assignedBy:currentUser||''};
+  tasks.push(t);
+  markRecentlyCreated(t.id);
+  await apiPost('addTask',{task:{...t,person:personId}});
+  saveLocal();
+  closeSuperAddTask();
+  superActiveTab = superSelectedStatus;
+  renderSuperView();
+  // Trigger push notification to assigned super
+  const assignedPerson = PEOPLE.find(p=>p.id===personId);
+  if(assignedPerson && Notification.permission==='granted'){
+    new Notification('🔴 New task assigned to you',{
+      body:`${assignedPerson.name}: open the board to review your tasks.`,
+      tag:'super-task-'+t.id
+    });
+  }
+  document.getElementById('sat-title').value='';
+  document.getElementById('sat-due').value='';
+}
+
+// ── SERVICE WORKER + PUSH NOTIFICATIONS ──────────────────────
+let swRegistration = null;
+
+// Detect iOS Safari
+function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+// Detect if running as installed PWA (standalone mode)
+function isPWA(){ return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches; }
+
+async function registerServiceWorker(){
+  if(!('serviceWorker' in navigator)) return null;
+  try {
+    const reg = await navigator.serviceWorker.register('sw.js', { scope: '/taskboard/' });
+    swRegistration = reg;
+    return reg;
+  } catch(e) {
+    console.warn('SW registration failed:', e);
+    return null;
+  }
+}
+
+function showNotifBanner(){
+  if(!isSuperUser()) return;
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'granted') return;
+
+  // iOS + not installed as PWA → show "Add to Home Screen" guide first
+  if(isIOS() && !isPWA()){
+    if(localStorage.getItem('pg_ios_pwa_shown')) return;
+    setTimeout(()=>{
+      const modal = document.getElementById('ios-pwa-modal');
+      if(modal) modal.style.display = 'flex';
+    }, 1500);
+    return;
+  }
+
+  // Android or iOS PWA → show notification permission banner
+  if(localStorage.getItem('pg_notif_asked')) return;
+  setTimeout(()=>{
+    const banner = document.getElementById('notif-banner');
+    if(banner) banner.classList.add('show');
+  }, 2000);
+}
+
+function dismissIosPwaModal(skip=false){
+  const modal = document.getElementById('ios-pwa-modal');
+  if(modal) modal.style.display = 'none';
+  localStorage.setItem('pg_ios_pwa_shown', '1');
+  // If they said "skip", don't remind again this session
+}
+
+async function enableNotifications(){
+  const banner = document.getElementById('notif-banner');
+  if(banner) banner.classList.remove('show');
+  localStorage.setItem('pg_notif_asked', '1');
+
+  if(!('Notification' in window)){
+    showToast('⚠ Notifications not supported on this browser');
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+  if(permission === 'granted'){
+    showToast('🔔 Notifications enabled!');
+    await registerServiceWorker();
+    setTimeout(()=>{
+      new Notification('✓ Notifications enabled', {
+        body: 'You\'ll be notified whenever a task is assigned to you.',
+        tag: 'pg-setup',
+        icon: '/taskboard/icon-192.png',
+      });
+    }, 500);
+  } else {
+    showToast('Notifications blocked — enable them in iPhone Settings → Safari → Notifications');
+  }
+}
+
+function dismissNotifBanner(){
+  const banner = document.getElementById('notif-banner');
+  if(banner) banner.classList.remove('show');
+  localStorage.setItem('pg_notif_asked', '1');
+}
+
+// Show a notification via Service Worker (works even when app is backgrounded)
+async function showPushNotification(title, body, tag){
+  if(!('Notification' in window)) return;
+  if(Notification.permission !== 'granted') return;
+  const options = {
+    body,
+    tag: tag || 'pg-task',
+    icon: '/taskboard/icon-192.png',
+    badge: '/taskboard/icon-192.png',
+    vibrate: [200, 100, 200],
+    requireInteraction: true,
+    data: { url: '/taskboard/' }
+  };
+  if(swRegistration){
+    try {
+      await swRegistration.showNotification(title, options);
+      return;
+    } catch(e) {}
+  }
+  new Notification(title, options);
+}
+
+// ── SUPERINTENDENT NOTIFICATIONS ─────────────────────────────
+async function notifySuperIfAssigned(task, previousManagers){
+  if(Notification.permission !== 'granted') return;
+  const newManagers = task.managers || [];
+  const prev = previousManagers || [];
+  const newlyAssigned = newManagers.filter(id => SUPER_IDS.includes(id) && !prev.includes(id));
+  for(const id of newlyAssigned){
+    const p = PEOPLE.find(x=>x.id===id);
+    if(!p) continue;
+    const key = 'pg_notif_task_'+task.id+'_'+id;
+    if(localStorage.getItem(key)) continue;
+    await showPushNotification(
+      '🔴 New task assigned to you',
+      `${p.name}: open the board to review your tasks.`,
+      key
+    );
+    localStorage.setItem(key, '1');
+  }
 }
 
 // ── ADMIN PANEL (Estefany only) ───────────────────────────────
@@ -2546,6 +3011,8 @@ async function checkBirthdayNotifications(){
 // ── INIT ──────────────────────────────────────────────────────
 buildPersonFilter();
 initWhoModal();
+// Register SW immediately if possible (needed for background notifications)
+registerServiceWorker();
 loadAllUserStatuses().then(()=>{ applyCurrentUser(); });
 loadBirthdays().then(()=>{ checkBirthdayNotifications(); });
 loadTasks();
