@@ -346,8 +346,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .who-option { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; border: 1.5px solid #e4e7ef; background: #fff; cursor: pointer; transition: border-color 0.12s, background 0.12s; }
 
 /* ── SUPERINTENDENT MOBILE VIEW ── */
-#super-view { display:none; flex-direction:column; min-height:100vh; background:#1E2235; }
-.super-header { padding:16px 16px 10px; background:#1E2235; position:sticky; top:0; z-index:10; }
+#super-view { display:none; flex-direction:column; min-height:100vh; min-height:100dvh; background:#1E2235; }
+.super-task-list { padding:12px 14px; padding-bottom: max(env(safe-area-inset-bottom, 80px), 80px); display:flex; flex-direction:column; gap:8px; overflow-y:auto; }
+.super-fab { position:fixed; bottom: max(env(safe-area-inset-bottom, 24px), 24px); right:20px; background:#E53935; color:#fff; border:none; border-radius:50%; width:54px; height:54px; font-size:24px; cursor:pointer; box-shadow:0 4px 16px rgba(229,57,53,0.4); display:flex; align-items:center; justify-content:center; z-index:20; }
+.super-header { padding: env(safe-area-inset-top, 16px) 16px 10px; padding-top: max(env(safe-area-inset-top), 16px); background:#1E2235; position:sticky; top:0; z-index:10; }
 .super-header-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
 .super-name { color:#fff; font-size:18px; font-weight:700; }
 .super-role { color:rgba(255,255,255,0.4); font-size:10px; letter-spacing:0.5px; }
@@ -361,7 +363,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .super-tab.active-low { background:#16a34a; color:#fff; }
 .super-tab.active-done { background:#6b7280; color:#fff; }
 .super-tab.inactive { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.5); }
-.super-task-list { padding:12px 14px 80px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; }
+/* Notification permission banner */
 .super-task-card { background:#fff; border-radius:12px; padding:13px 14px; display:flex; align-items:center; gap:11px; }
 .super-task-bar { width:4px; border-radius:4px; flex-shrink:0; align-self:stretch; }
 .super-task-bar.high { background:#E53935; }
@@ -380,7 +382,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .super-done-btn.low { color:#16a34a; }
 .super-done-btn.done { background:#6b7280; border-color:#6b7280; color:#fff; }
 .super-empty { text-align:center; padding:40px 20px; color:rgba(255,255,255,0.25); font-size:13px; }
-.super-fab { position:fixed; bottom:24px; right:20px; background:#E53935; color:#fff; border:none; border-radius:50%; width:54px; height:54px; font-size:24px; cursor:pointer; box-shadow:0 4px 16px rgba(229,57,53,0.4); display:flex; align-items:center; justify-content:center; z-index:20; }
+/* Notification permission banner */
 
 /* Notification permission banner */
 .notif-banner { position:fixed; bottom:0; left:0; right:0; z-index:100; background:#1E2235; border-top:1px solid rgba(255,255,255,0.1); padding:16px 20px; display:flex; align-items:center; gap:12px; box-shadow:0 -4px 24px rgba(0,0,0,0.3); transform:translateY(100%); transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1); }
@@ -1200,7 +1202,9 @@ async function waitForTasksToIncrease(beforeCount, maxWaitMs = 60000, intervalMs
   return { success: false, timedOut: true };
 }
 
-const PEOPLE = [
+// PEOPLE is loaded dynamically from the Sheet's Config tab on startup.
+// The hardcoded array below is the fallback if the Sheet is unreachable.
+let PEOPLE = [
   { id:'chelo',     name:'Chelo',         role:'Manager',         color:'#E53935', type:'manager', subGroup:'Production',       subColor:'#E53935', usertype:'office' },
   { id:'estefany',  name:'Estefany',      role:'Production Assistant', color:'#EF5350', type:'sub', subOf:'chelo', usertype:'office' },
   { id:'godofredo', name:'Godofredo',      role:'Manager',         color:'#7B1FA2', type:'manager', subGroup:'Permits',          subColor:'#7B1FA2', usertype:'office' },
@@ -1210,16 +1214,40 @@ const PEOPLE = [
   { id:'mariel',    name:'Mariel',         role:'Manager',         color:'#0F6E56', type:'manager', subGroup:'Project Managers', subColor:'#0F6E56', usertype:'office' },
   { id:'daniel',    name:'Daniel Farfan',  role:'Project Manager', color:'#1976D2', type:'sub',     subOf:'mariel', usertype:'office' },
   { id:'rafaela',   name:'Rafaela',        role:'Project Manager', color:'#1565c0', type:'sub',     subOf:'mariel', usertype:'office' },
-  // Superintendents
   { id:'nicolas',   name:'Nicolas Jara',   role:'Superintendent',  color:'#0891b2', type:'super', usertype:'superintendent', subGroup:'Superintendents', subColor:'#0891b2' },
   { id:'david',     name:'David Escheik',  role:'Superintendent',  color:'#0e7490', type:'super', usertype:'superintendent', subGroup:'Superintendents', subColor:'#0e7490' },
 ];
 
+let SUPER_IDS = PEOPLE.filter(p=>p.usertype==='superintendent').map(p=>p.id);
+let OFFICE_IDS = PEOPLE.filter(p=>p.usertype==='office').map(p=>p.id);
+
+function rebuildPeopleDerivedConstants(){
+  SUPER_IDS = PEOPLE.filter(p=>p.usertype==='superintendent').map(p=>p.id);
+  OFFICE_IDS = PEOPLE.filter(p=>p.usertype==='office').map(p=>p.id);
+}
+
+async function loadPeople(){
+  if(!USE_SHEETS) return;
+  try {
+    const data = await sheetGet('getPeople');
+    if(!Array.isArray(data) || data.length === 0) return;
+    // Map Sheet Config rows to PEOPLE format
+    PEOPLE = data.map(r => ({
+      id:       r.personid || r.id || '',
+      name:     r.name || '',
+      role:     r.role || '',
+      color:    r.color || '#6b7280',
+      type:     r.type || 'sub',
+      subOf:    r.parentid || '',
+      usertype: r.usertype || (r.type === 'super' ? 'superintendent' : 'office'),
+    })).filter(p => p.id && p.name);
+    rebuildPeopleDerivedConstants();
+  } catch(e) { /* keep hardcoded fallback */ }
+}
+
 // Helper: is the current user a superintendent?
 function isSuper(name){ return PEOPLE.some(p=>p.name===name && p.usertype==='superintendent'); }
 function isSuperById(id){ return PEOPLE.some(p=>p.id===id && p.usertype==='superintendent'); }
-const SUPER_IDS = PEOPLE.filter(p=>p.usertype==='superintendent').map(p=>p.id);
-const OFFICE_IDS = PEOPLE.filter(p=>p.usertype==='office').map(p=>p.id);
 
 const STATUSES = [
   { id:'high',    label:'High Priority', shortLabel:'HIGH' },
@@ -2904,13 +2932,16 @@ async function savePersonForm(){
 
   if(adminEditingId){
     personPayload.personid = adminEditingId;
+    personPayload.usertype = type === 'super' ? 'superintendent' : 'office';
     await apiPost('updatePerson', { person: personPayload });
-    // Update local PEOPLE array
     const idx = PEOPLE.findIndex(p=>p.id===adminEditingId);
-    if(idx!==-1) PEOPLE[idx] = { id:adminEditingId, name, role, color, type, subOf:parent, subGroup:PEOPLE[idx].subGroup, subColor:PEOPLE[idx].subColor };
+    if(idx!==-1) PEOPLE[idx] = { id:adminEditingId, name, role, color, type, subOf:parent, usertype: personPayload.usertype, subGroup:PEOPLE[idx].subGroup, subColor:PEOPLE[idx].subColor };
+    rebuildPeopleDerivedConstants();
   } else {
+    personPayload.usertype = type === 'super' ? 'superintendent' : 'office';
     await apiPost('addPerson', { person: personPayload });
-    PEOPLE.push({ id, name, role, color, type, subOf: parent });
+    PEOPLE.push({ id, name, role, color, type, subOf: parent, usertype: personPayload.usertype });
+    rebuildPeopleDerivedConstants();
   }
 
   // Save birthday if provided
@@ -2934,6 +2965,7 @@ async function deletePersonFromForm(){
   await apiPost('deletePerson', { personId: adminEditingId });
   const idx = PEOPLE.findIndex(x=>x.id===adminEditingId);
   if(idx!==-1) PEOPLE.splice(idx,1);
+  rebuildPeopleDerivedConstants();
   showToast(`✓ ${p.name} removed`);
   cancelPersonForm();
   renderAdminPeopleList();
@@ -3004,14 +3036,17 @@ async function checkBirthdayNotifications(){
 
 // ── INIT ──────────────────────────────────────────────────────
 buildPersonFilter();
-initWhoModal();
-// Register SW immediately if possible (needed for background notifications)
-registerServiceWorker();
-loadAllUserStatuses().then(()=>{ applyCurrentUser(); });
-loadBirthdays().then(()=>{ checkBirthdayNotifications(); });
-loadTasks();
+// Load people from Sheet first so adds/deletes persist across refreshes
+loadPeople().then(()=>{
+  initWhoModal();
+  registerServiceWorker();
+  loadAllUserStatuses().then(()=>{ applyCurrentUser(); });
+  loadBirthdays().then(()=>{ checkBirthdayNotifications(); });
+  loadTasks();
+});
 setInterval(async ()=>{
   if(USE_SHEETS && !openEditId){
+    await loadPeople();
     await loadAllUserStatuses();
     await loadBirthdays();
     checkBirthdayNotifications();
