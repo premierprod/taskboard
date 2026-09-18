@@ -887,6 +887,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
           <span style="color:rgba(255,255,255,0.55);font-size:10px;font-weight:500;">Active</span>
         </div>
         <span id="super-sync-badge" style="font-size:9px;color:rgba(255,255,255,0.25);"></span>
+        <span onclick="resetCurrentUser()" style="font-size:9px;color:rgba(255,255,255,0.2);cursor:pointer;text-decoration:underline;">Not you?</span>
       </div>
     </div>
     <div class="super-tabs" id="super-tabs"></div>
@@ -1309,7 +1310,18 @@ function isOverdue(t){ return t.due&&t.status!=='done'&&new Date(t.due+'T12:00:0
 let recentlyCreatedIds = new Set();
 
 async function loadTasks(){
-  document.getElementById('syncBadge').textContent='Loading...';
+  // Show cached data INSTANTLY while Sheet loads in background
+  // This eliminates the blank screen / loading feeling
+  const cached = localStorage.getItem('pg_bk');
+  if(cached && tasks.length === 0){
+    try{
+      tasks = JSON.parse(cached);
+      tasks.forEach(normalizeTaskManagers);
+      render(); // show cached immediately
+    }catch(e){}
+  }
+
+  document.getElementById('syncBadge').textContent='Syncing...';
   if(!USE_SHEETS){ loadLocal(); return; }
   try{
     const data = await sheetGet('getTasks');
@@ -1321,8 +1333,6 @@ async function loadTasks(){
       assignedBy: r.meetingname && r.meetingname.startsWith('Assigned by: ') ? r.meetingname.replace('Assigned by: ','') : ''
     }));
 
-    // Protect tasks created in the last 20s that might not have landed in the
-    // Sheet yet (write still in flight) — don't let a stale read wipe them.
     const remoteIds = new Set(remoteTasks.map(t=>t.id));
     const protectedLocal = tasks.filter(t => recentlyCreatedIds.has(t.id) && !remoteIds.has(t.id));
 
@@ -1333,8 +1343,8 @@ async function loadTasks(){
     const superBadge = document.getElementById('super-sync-badge');
     if(superBadge) superBadge.textContent = syncTime;
   }catch(e){
-    showToast('⚠ Sheets offline — using local cache');
-    loadLocal();
+    document.getElementById('syncBadge').textContent='Offline';
+    if(!tasks.length) loadLocal();
   }
   render();
 }
@@ -2346,7 +2356,23 @@ function doRefresh(){
 // ── WHO ARE YOU ────────────────────────────────────────────────
 let selectedWhoName = null;
 
+function resetCurrentUser(){
+  localStorage.removeItem('pg_currentUser');
+  localStorage.removeItem('pg_notif_asked');
+  localStorage.removeItem('pg_ios_pwa_shown');
+  location.reload();
+}
+
 function initWhoModal(){
+  // Allow ?reset=1 in URL to force the modal to show (useful for re-identifying on mobile)
+  if(new URLSearchParams(window.location.search).get('reset') === '1'){
+    localStorage.removeItem('pg_currentUser');
+    localStorage.removeItem('pg_notif_asked');
+    localStorage.removeItem('pg_ios_pwa_shown');
+    // Clean URL without reload
+    history.replaceState({}, '', window.location.pathname);
+  }
+
   const saved = localStorage.getItem('pg_currentUser');
   if(saved){ currentUser = saved; return; }
 
@@ -2445,6 +2471,8 @@ function confirmWho(){
   const modal = document.getElementById('whoModal');
   if(modal) modal.style.display='none';
   applyCurrentUser();
+  // Load tasks immediately after identity confirmed
+  loadTasks();
 }
 
 // ── STATUS SYSTEM (synced to Sheet so everyone sees everyone's status) ──
@@ -3044,28 +3072,40 @@ async function checkBirthdayNotifications(){
 }
 
 // ── INIT ──────────────────────────────────────────────────────
+// ── INIT ─────────────────────────────────────────────────────
+// Step 1: Show modal or apply saved identity instantly (no waiting)
 buildPersonFilter();
-// Load people from Sheet first so adds/deletes persist across refreshes
-loadPeople().then(()=>{
-  initWhoModal();
-  registerServiceWorker();
-  loadAllUserStatuses().then(()=>{ applyCurrentUser(); });
-  loadBirthdays().then(()=>{ checkBirthdayNotifications(); });
-  loadTasks();
+initWhoModal(); // shows modal OR applies saved currentUser immediately
+registerServiceWorker();
+
+// Step 2: Load everything in parallel — don't block on any single request
+Promise.all([
+  loadPeople(),
+  loadAllUserStatuses(),
+]).then(()=>{
+  applyCurrentUser();
+  buildPersonFilter(); // rebuild with loaded people
+  initWhoModal();      // re-run in case PEOPLE changed (supers now visible)
 });
+
+// Step 3: Load tasks immediately — don't wait for people/statuses
+loadTasks();
+
+// Step 4: Load birthdays in background (non-critical)
+loadBirthdays().then(()=>{ checkBirthdayNotifications(); });
 
 // Auto-refresh every 30s
 setInterval(async ()=>{
-  if(USE_SHEETS && !openEditId){
-    await loadPeople();
-    await loadAllUserStatuses();
+  if(!openEditId){
+    // Run in parallel for speed
+    Promise.all([loadPeople(), loadAllUserStatuses()]).then(()=>{ applyCurrentUser(); });
     loadTasks();
   }
 }, 30000);
 
-// Instant refresh when switching back to this tab/window
+// Instant refresh when switching back to this tab
 document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState === 'visible' && USE_SHEETS && !openEditId){
+  if(document.visibilityState === 'visible' && !openEditId){
     loadTasks();
   }
 });
