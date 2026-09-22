@@ -16,10 +16,10 @@
 <meta name="apple-mobile-web-app-title" content="PG Tasks">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #1E2235; min-height: 100vh; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #1E2235; min-height: 100vh; padding-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* ── HEADER ── */
-.header { background: #1E2235; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 52px; position: sticky; top: 0; z-index: 50; }
+.header { background: #1E2235; padding: 0 24px; padding-top: env(safe-area-inset-top, 0px); display: flex; align-items: center; justify-content: space-between; min-height: 52px; height: calc(52px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 50; }
 .header-left { display: flex; align-items: center; gap: 10px; }
 .header-dot { width: 9px; height: 9px; background: #E53935; border-radius: 50%; flex-shrink: 0; }
 .header-title { color: #fff; font-size: 14px; font-weight: 600; letter-spacing: 0.2px; }
@@ -349,7 +349,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .who-option { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; border: 1.5px solid #e4e7ef; background: #fff; cursor: pointer; transition: border-color 0.12s, background 0.12s; }
 
 /* ── SUPERINTENDENT MOBILE VIEW ── */
-#super-view { display:none; flex-direction:column; min-height:100vh; min-height:100dvh; background:#f0f2f5; }
+#super-view { display:none; flex-direction:column; min-height:100vh; min-height:100dvh; background:#1E2235; }
 .super-task-list { padding:12px 14px; padding-bottom: max(env(safe-area-inset-bottom, 80px), 80px); display:flex; flex-direction:column; gap:8px; overflow-y:auto; flex:1; }
 .super-fab { position:fixed; bottom: max(env(safe-area-inset-bottom, 24px), 24px); right:20px; background:#E53935; color:#fff; border:none; border-radius:50%; width:54px; height:54px; font-size:24px; cursor:pointer; box-shadow:0 4px 16px rgba(229,57,53,0.4); display:flex; align-items:center; justify-content:center; z-index:20; }
 .super-header { background:#1E2235; position:sticky; top:0; z-index:10; padding: 0 16px 10px; padding-top: calc(env(safe-area-inset-top, 0px) + 20px); }
@@ -512,7 +512,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 @media (max-width: 768px) {
 
   /* Header */
-  .header { padding: 0 14px; height: auto; min-height: 52px; flex-wrap: wrap; gap: 6px; padding: 8px 14px; }
+  .header { padding: 8px 14px; padding-top: calc(env(safe-area-inset-top, 0px) + 8px); height: auto; min-height: calc(52px + env(safe-area-inset-top, 0px)); flex-wrap: wrap; gap: 6px; }
   .header-title { font-size: 13px; line-height: 1.2; }
   .header-right { gap: 6px; }
   .btn-import { padding: 7px 12px; font-size: 12px; }
@@ -677,7 +677,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <!-- Header -->
 <div class="header">
   <div class="header-left">
-    <div class="header-dot"></div>
+    <div class="header-dot" id="header-dot"></div>
     <div style="display:flex;align-items:center;gap:10px;">
       <span id="header-title" style="color:#fff;font-size:17px;font-weight:700;letter-spacing:-0.2px;">PREMIER GROUP</span>
       <span style="color:rgba(255,255,255,0.25);font-size:15px;font-weight:300;">|</span>
@@ -704,6 +704,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <div class="header-right">
     <span class="sync-badge" id="syncBadge">—</span>
     <button id="admin-gear-btn" class="admin-btn" onclick="openAdminPanel()" style="display:none;">⚙ Admin</button>
+    <button id="logout-btn" onclick="resetCurrentUser()" style="display:none;background:none;border:none;color:rgba(255,255,255,0.25);font-size:11px;cursor:pointer;padding:4px 6px;">↩ Exit</button>
     <button class="btn-refresh" onclick="doRefresh()">↻ Refresh</button>
     <button class="btn-import" onclick="openModal()">+ Import</button>
   </div>
@@ -888,6 +889,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         </div>
         <span id="super-sync-badge" style="font-size:9px;color:rgba(255,255,255,0.25);"></span>
         <span onclick="resetCurrentUser()" style="font-size:9px;color:rgba(255,255,255,0.2);cursor:pointer;text-decoration:underline;">Not you?</span>
+        <span id="super-admin-logout" onclick="resetCurrentUser()" style="display:none;font-size:9px;color:rgba(229,57,53,0.6);cursor:pointer;text-decoration:underline;margin-top:2px;">⚙ Switch user</span>
       </div>
     </div>
     <div class="super-tabs" id="super-tabs"></div>
@@ -1282,6 +1284,8 @@ const PRIO_KW = {
 
 // ── STATE ─────────────────────────────────────────────────────
 let tasks = [];
+// Tracks task IDs already seen by this user — used to detect newly assigned tasks
+let knownTaskIds = new Set(JSON.parse(localStorage.getItem('pg_known_task_ids') || '[]'));
 let filterPerson = 'all';
 let currentUser = null; // Set when user identifies themselves on first load
 let subOpen = {};
@@ -1342,6 +1346,29 @@ async function loadTasks(){
     document.getElementById('syncBadge').textContent = syncTime;
     const superBadge = document.getElementById('super-sync-badge');
     if(superBadge) superBadge.textContent = syncTime;
+
+    // Check for tasks newly assigned to the current user (runs on THEIR device)
+    if(currentUser && knownTaskIds.size > 0){
+      const myId = PEOPLE.find(p=>p.name===currentUser)?.id;
+      if(myId){
+        const myTasks = tasks.filter(t=>(t.managers||[]).includes(myId) && t.status!=='done');
+        const newTasks = myTasks.filter(t=>!knownTaskIds.has(t.id));
+        for(const t of newTasks){
+          await showPushNotification(
+            '🔴 New task assigned to you',
+            t.title,
+            'pg-new-task-' + t.id
+          );
+        }
+      }
+    }
+    // Update known IDs
+    const myId2 = PEOPLE.find(p=>p.name===currentUser)?.id;
+    if(myId2){
+      const myTaskIds = tasks.filter(t=>(t.managers||[]).includes(myId2)).map(t=>t.id);
+      myTaskIds.forEach(id=>knownTaskIds.add(id));
+      localStorage.setItem('pg_known_task_ids', JSON.stringify([...knownTaskIds]));
+    }
   }catch(e){
     document.getElementById('syncBadge').textContent='Offline';
     if(!tasks.length) loadLocal();
@@ -2360,8 +2387,24 @@ function resetCurrentUser(){
   localStorage.removeItem('pg_currentUser');
   localStorage.removeItem('pg_notif_asked');
   localStorage.removeItem('pg_ios_pwa_shown');
+  localStorage.removeItem('pg_known_task_ids');
   location.reload();
 }
+
+// Long-press on red dot (2s) → logout — mobile only, no visual hint
+(function(){
+  const dot = document.getElementById('header-dot');
+  if(!dot) return;
+  let pressTimer = null;
+  dot.addEventListener('touchstart', (e)=>{
+    pressTimer = setTimeout(()=>{
+      pressTimer = null;
+      if(confirm('Sign out?')) resetCurrentUser();
+    }, 2000);
+  }, { passive: true });
+  dot.addEventListener('touchend', ()=>{ clearTimeout(pressTimer); });
+  dot.addEventListener('touchmove', ()=>{ clearTimeout(pressTimer); });
+})();
 
 function initWhoModal(){
   // Allow ?reset=1 in URL to force the modal to show (useful for re-identifying on mobile)
@@ -2369,17 +2412,17 @@ function initWhoModal(){
     localStorage.removeItem('pg_currentUser');
     localStorage.removeItem('pg_notif_asked');
     localStorage.removeItem('pg_ios_pwa_shown');
-    // Clean URL without reload
+    localStorage.removeItem('pg_known_task_ids');
     history.replaceState({}, '', window.location.pathname);
   }
 
   const saved = localStorage.getItem('pg_currentUser');
   if(saved){ currentUser = saved; return; }
 
-  // Build main team list — OFFICE only
+  // Build main team list — office + superintendents together
   const mainList = document.getElementById('who-person-list');
   if(mainList){
-    mainList.innerHTML = PEOPLE.filter(p=>p.usertype==='office').map(p=>{
+    mainList.innerHTML = PEOPLE.map(p=>{
       const initials = p.name.split(' ').map(w=>w[0]).join('').slice(0,2);
       return `<div class="who-option" onclick="selectWho('${p.name}',this)">
         <div class="who-avatar" style="background:${p.color};">${initials}</div>
@@ -2388,30 +2431,20 @@ function initWhoModal(){
     }).join('');
   }
 
-  // Build secondary list — Daniella, Sandra + Superintendents section
+  // Build secondary list — only Daniella and Sandra
   const secondaryList = document.getElementById('who-secondary-list');
   if(secondaryList){
     const extras = [
       { name:'Daniella Kuroki', color:'#6b7280' },
       { name:'Sandra Melendez', color:'#6b7280' },
     ];
-    const supers = PEOPLE.filter(p=>p.usertype==='superintendent');
-    secondaryList.innerHTML =
-      extras.map(e=>{
-        const initials = e.name.split(' ').map(w=>w[0]).join('').slice(0,2);
-        return `<div class="who-option" onclick="selectWho('${e.name}',this)">
-          <div class="who-avatar" style="background:${e.color};">${initials}</div>
-          <span class="who-name">${e.name}</span>
-        </div>`;
-      }).join('') +
-      `<div style="font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:0.5px;padding:8px 4px 4px;text-transform:uppercase;">Superintendents</div>` +
-      supers.map(p=>{
-        const initials = p.name.split(' ').map(w=>w[0]).join('').slice(0,2);
-        return `<div class="who-option" onclick="selectWho('${p.name}',this)">
-          <div class="who-avatar" style="background:${p.color};">${initials}</div>
-          <span class="who-name">${p.name} <span style="font-weight:400;color:#9ca3af;font-size:11px;">— ${p.role}</span></span>
-        </div>`;
-      }).join('');
+    secondaryList.innerHTML = extras.map(e=>{
+      const initials = e.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+      return `<div class="who-option" onclick="selectWho('${e.name}',this)">
+        <div class="who-avatar" style="background:${e.color};">${initials}</div>
+        <span class="who-name">${e.name}</span>
+      </div>`;
+    }).join('');
   }
 
   const modal = document.getElementById('whoModal');
@@ -2509,6 +2542,8 @@ function applyCurrentUser(){
   // Show admin button only for Estefany
   const adminBtn = document.getElementById('admin-gear-btn');
   if(adminBtn) adminBtn.style.display = currentUser === ADMIN_USER ? 'inline-block' : 'none';
+  const logoutBtn2 = document.getElementById('logout-btn');
+  if(logoutBtn2) logoutBtn2.style.display = currentUser === ADMIN_USER ? 'inline-block' : 'none';
 
   // Load MY status from the shared store (or localStorage as fallback)
   const myStatus = allUserStatuses[currentUser] || {
@@ -2520,6 +2555,9 @@ function applyCurrentUser(){
   // Superintendents on mobile → activate simplified view
   if(isSuperMobile()){
     activateSuperView();
+    // Show switch-user control only for Estefany (admin)
+    const logoutBtn = document.getElementById('super-admin-logout');
+    if(logoutBtn) logoutBtn.style.display = currentUser === ADMIN_USER ? 'block' : 'none';
   }
 
   // Show smooth notification permission banner for supers (not a jarring browser popup)
@@ -2692,17 +2730,19 @@ function renderSuperView(){
   listEl.innerHTML = '';
   filtered.forEach(t=>{
     const card = document.createElement('div');
+    const isDone = t.status === 'done';
     card.className = 'super-task-card';
-    const isOverdueTask = t.due && t.due < todayStr() && t.status!=='done';
+    if(isDone) card.style.opacity = '0.6';
+    const isOverdueTask = t.due && t.due < todayStr() && !isDone;
     const assignees = (t.managers||[]).map(id=>PEOPLE.find(p=>p.id===id)?.name.split(' ')[0]).filter(Boolean).join(', ');
     card.innerHTML = `
       <div class="super-task-bar ${t.status}"></div>
       <div class="super-task-body">
-        <div class="super-task-title">${t.title}</div>
+        <div class="super-task-title" style="${isDone?'text-decoration:line-through;color:#9ca3af;':''}">${t.title}</div>
         <div class="super-task-meta ${isOverdueTask?'overdue':''}">${t.due ? (isOverdueTask?'⚠ '+fmtDate(t.due)+' · overdue':fmtDate(t.due)) : 'No due date'}</div>
         ${assignees ? `<div class="super-task-assignee">→ ${assignees}</div>` : ''}
       </div>
-      <button class="super-done-btn ${t.status==='done'?'done':t.status}" onclick="superToggleDone('${t.id}')">${t.status==='done'?'✓':''}</button>
+      <button class="super-done-btn ${isDone?'done':t.status}" onclick="superToggleDone('${t.id}')">${isDone?'✓':''}</button>
     `;
     listEl.appendChild(card);
   });
@@ -2776,9 +2816,11 @@ async function registerServiceWorker(){
 function showNotifBanner(){
   if(!isSuperUser()) return;
   if(!('Notification' in window)) return;
+  // Already granted — nothing to do
   if(Notification.permission === 'granted') return;
-
-  // iOS + not installed as PWA → show "Add to Home Screen" guide first
+  // Denied — can't re-ask
+  if(Notification.permission === 'denied') return;
+  // iOS not installed as PWA → show install guide first
   if(isIOS() && !isPWA()){
     if(localStorage.getItem('pg_ios_pwa_shown')) return;
     setTimeout(()=>{
@@ -2787,12 +2829,10 @@ function showNotifBanner(){
     }, 1500);
     return;
   }
-
-  // Android or iOS PWA → show notification permission banner
-  if(localStorage.getItem('pg_notif_asked')) return;
+  // Show banner — always if permission not yet granted (don't gate on pg_notif_asked)
   setTimeout(()=>{
     const banner = document.getElementById('notif-banner');
-    if(banner) banner.classList.add('show');
+    if(banner && Notification.permission !== 'granted') banner.classList.add('show');
   }, 2000);
 }
 
@@ -2806,33 +2846,38 @@ function dismissIosPwaModal(skip=false){
 async function enableNotifications(){
   const banner = document.getElementById('notif-banner');
   if(banner) banner.classList.remove('show');
-  localStorage.setItem('pg_notif_asked', '1');
 
   if(!('Notification' in window)){
-    showToast('⚠ Notifications not supported on this browser');
+    showToast('⚠ Not supported');
     return;
   }
 
   const permission = await Notification.requestPermission();
   if(permission === 'granted'){
-    showToast('🔔 Notifications enabled!');
+    localStorage.setItem('pg_notif_asked', '1');
+    // Seed knownTaskIds with current tasks so only FUTURE ones trigger notifications
+    const myId = PEOPLE.find(p=>p.name===currentUser)?.id;
+    if(myId){
+      tasks.filter(t=>(t.managers||[]).includes(myId)).forEach(t=>knownTaskIds.add(t.id));
+      localStorage.setItem('pg_known_task_ids', JSON.stringify([...knownTaskIds]));
+    }
     await registerServiceWorker();
+    showToast('🔔 Notifications enabled!');
     setTimeout(()=>{
-      new Notification('✓ Notifications enabled', {
-        body: 'You\'ll be notified whenever a task is assigned to you.',
+      new Notification('✓ Premier Group Tasks', {
+        body: 'You will be notified when tasks are assigned to you.',
         tag: 'pg-setup',
-        icon: '/taskboard/icon-192.png',
       });
     }, 500);
-  } else {
-    showToast('Notifications blocked — enable them in iPhone Settings → Safari → Notifications');
+  } else if(permission === 'denied'){
+    showToast('Blocked — go to iPhone Settings → Premier Group → Notifications → Allow');
   }
 }
 
 function dismissNotifBanner(){
   const banner = document.getElementById('notif-banner');
   if(banner) banner.classList.remove('show');
-  localStorage.setItem('pg_notif_asked', '1');
+  // Don't permanently block — let it show again next visit
 }
 
 // Show a notification via Service Worker (works even when app is backgrounded)
@@ -3094,14 +3139,14 @@ loadTasks();
 // Step 4: Load birthdays in background (non-critical)
 loadBirthdays().then(()=>{ checkBirthdayNotifications(); });
 
-// Auto-refresh every 30s
+// Auto-refresh: 15s for superintendents (faster notification detection), 30s for office
+const REFRESH_INTERVAL = isSuperUser() ? 15000 : 30000;
 setInterval(async ()=>{
   if(!openEditId){
-    // Run in parallel for speed
     Promise.all([loadPeople(), loadAllUserStatuses()]).then(()=>{ applyCurrentUser(); });
     loadTasks();
   }
-}, 30000);
+}, REFRESH_INTERVAL);
 
 // Instant refresh when switching back to this tab
 document.addEventListener('visibilitychange', ()=>{
