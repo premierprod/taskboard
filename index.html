@@ -196,9 +196,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .card-edit-btn { position: absolute; top: 10px; right: 10px; background: #f0f2f5; border: none; border-radius: 6px; padding: 3px 8px; font-size: 11px; color: #6b7280; cursor: pointer; display: none; font-weight: 500; }
 .task-card:hover .card-edit-btn { display: block; }
 .card-edit-btn:hover { background: #1E2235; color: #fff; }
-.card-gsr-btn { border: none; border-radius: 8px; padding: 2px 8px; font-size: 10px; font-weight: 600; cursor: pointer; background: #FBEFB5; color: #86671A; }
-.card-gsr-btn:hover:not(:disabled) { background: #f5e08a; }
-.card-gsr-btn:disabled { background: #CDEBD3; color: #2F6B45; cursor: default; }
 
 /* ── EDIT PANEL ── */
 .card-edit-panel { display: none; margin-top: 10px; border-top: 1px solid #e8eaef; padding-top: 10px; }
@@ -258,6 +255,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .ep-save:hover { background: #E53935; }
 .ep-del { background: none; color: #E53935; border: 1px solid #ffcdd2; padding: 5px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
 .ep-cancel { background: none; color: #6b7280; border: 1px solid #e0e3ec; padding: 5px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+.ep-gsr-row { margin-top: 10px; }
+.ep-gsr-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; background: #FFFBEF; color: #8A6D1D; border: 1.5px solid #F3E3A3; padding: 7px 10px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.ep-gsr-btn:hover:not(:disabled) { background: #FBEFB5; border-color: #E8D27E; }
+.ep-gsr-btn:disabled { background: #EFF8F1; color: #2F6B45; border-color: #CDEBD3; cursor: default; }
+.ep-gsr-icon { font-size: 13px; }
 
 /* Add task input */
 .add-card { border: 1.5px dashed #d1d5db; border-radius: 10px; padding: 10px 12px; cursor: text; }
@@ -1534,8 +1536,8 @@ function importToGSR(taskId, e){
   if(!(t.managers&&t.managers.length)){ showToast('Assign this task to someone first'); return; }
 
   importedTaskIds.add(taskId);
-  const btn = document.querySelector(`#card-${taskId} .card-gsr-btn`);
-  if(btn){ btn.textContent='✓ In GSR'; btn.disabled=true; }
+  const btn = document.querySelector(`#card-${taskId} .ep-gsr-btn`);
+  if(btn){ btn.disabled=true; btn.innerHTML = '<span class="ep-gsr-icon">✓</span><span>Added to GSR</span>'; }
 
   apiPost('importToGSR', { taskId });
   showToast('Sent to GSR — check Commitments in a few seconds');
@@ -1622,9 +1624,14 @@ function buildCard(t){
       <label class="ep-label">Due date</label>
       <input type="date" class="ep-input" id="ed-${t.id}" value="${t.due||''}" style="width:auto;">
 
+      <div class="ep-gsr-row">
+        <button class="ep-gsr-btn" onclick="importToGSR('${t.id}',event)" ${importedTaskIds.has(t.id)?'disabled':''}>
+          <span class="ep-gsr-icon">${importedTaskIds.has(t.id)?'✓':'📤'}</span>
+          <span>${importedTaskIds.has(t.id)?'Added to GSR':'Import to GSR'}</span>
+        </button>
+      </div>
       <div class="ep-actions">
         <button class="ep-del" onclick="deleteTask('${t.id}')">Delete</button>
-        <button class="card-gsr-btn" style="padding:6px 10px;font-size:12px;" onclick="importToGSR('${t.id}',event)" ${importedTaskIds.has(t.id)?'disabled':''}>${importedTaskIds.has(t.id)?'✓ In GSR':'📤 Import to GSR'}</button>
         <button class="ep-cancel" onclick="closeEdit('${t.id}')">Cancel</button>
         <button class="ep-save" onclick="saveEdit('${t.id}')">Save</button>
       </div>
