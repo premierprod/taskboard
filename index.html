@@ -1526,8 +1526,9 @@ function renderKanban(){
 const importedTaskIds = new Set();
 
 // Sends this task into the assigned person's GSR "Commitments" tab.
-// Fire-and-forget (same pattern as addTask/updateTask) — the write really
-// happens on the GSR spreadsheet, this tab has no way to read it back.
+// Fire-and-forget for the write itself (same pattern as addTask/updateTask),
+// but then it checks the ImportLog a few seconds later to confirm it actually
+// landed — and shows the real error if it didn't, instead of a blind "done".
 function importToGSR(taskId, e){
   if(e) e.stopPropagation();
   if(importedTaskIds.has(taskId)) return;
@@ -1537,10 +1538,43 @@ function importToGSR(taskId, e){
 
   importedTaskIds.add(taskId);
   const btn = document.querySelector(`#card-${taskId} .ep-gsr-btn`);
-  if(btn){ btn.disabled=true; btn.innerHTML = '<span class="ep-gsr-icon">✓</span><span>Added to GSR</span>'; }
+  if(btn){ btn.disabled=true; btn.innerHTML = '<span class="ep-gsr-icon">⏳</span><span>Sending…</span>'; }
 
   apiPost('importToGSR', { taskId });
-  showToast('Sent to GSR — check Commitments in a few seconds');
+  showToast('Sending to GSR…');
+
+  setTimeout(async () => {
+    try {
+      const log = await sheetGet('getLastImportLog');
+      const field = (obj, names) => {
+        if(!obj) return undefined;
+        const keys = Object.keys(obj);
+        for(const n of names){
+          const k = keys.find(k => k.toLowerCase() === n.toLowerCase());
+          if(k !== undefined) return obj[k];
+        }
+        return undefined;
+      };
+      const source = field(log, ['Source']);
+      const label  = field(log, ['MeetingOrLabel','Label','Meeting']);
+      const count  = field(log, ['Count']);
+      const method = (field(log, ['Method']) || '').toString();
+      const matched = source === 'GSR' && label === t.title;
+      const hadErrors = method.indexOf('ERRORS:') !== -1;
+
+      if (matched && !hadErrors && Number(count) > 0) {
+        if(btn){ btn.innerHTML = '<span class="ep-gsr-icon">✓</span><span>Added to GSR</span>'; }
+        showToast('Added to GSR ✓');
+      } else {
+        importedTaskIds.delete(taskId);
+        if(btn){ btn.disabled=false; btn.innerHTML = '<span class="ep-gsr-icon">📤</span><span>Import to GSR</span>'; }
+        showToast(hadErrors ? method.split('ERRORS:')[1].trim() : "Didn't confirm — check Apps Script Executions");
+      }
+    } catch(err){
+      // Couldn't verify (network hiccup) — leave it as sent, don't scare the user
+      if(btn){ btn.innerHTML = '<span class="ep-gsr-icon">✓</span><span>Added to GSR</span>'; }
+    }
+  }, 3500);
 }
 
 function buildCard(t){
