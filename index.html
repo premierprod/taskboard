@@ -1540,7 +1540,10 @@ function importToGSR(taskId, e){
   const btn = document.querySelector(`#card-${taskId} .ep-gsr-btn`);
   if(btn){ btn.disabled=true; btn.innerHTML = '<span class="ep-gsr-icon">⏳</span><span>Sending…</span>'; }
 
-  apiPost('importToGSR', { taskId });
+  // Uses the iframe-form POST (same reliable path addTask/updateTask fall back
+  // to) instead of fetch(no-cors) — that one was silently not reaching the
+  // server at all in some browsers (zero doPost ever showed up in Executions).
+  sheetWriteViaForm('importToGSR', { taskId });
   showToast('Sending to GSR…');
 
   setTimeout(async () => {
