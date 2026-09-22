@@ -1347,22 +1347,26 @@ async function loadTasks(){
     const superBadge = document.getElementById('super-sync-badge');
     if(superBadge) superBadge.textContent = syncTime;
 
-    // Check for tasks newly assigned to the current user (runs on THEIR device)
+    // Check for tasks newly assigned to current user — fire notification on THEIR device
     if(currentUser && knownTaskIds.size > 0){
       const myId = PEOPLE.find(p=>p.name===currentUser)?.id;
       if(myId){
         const myTasks = tasks.filter(t=>(t.managers||[]).includes(myId) && t.status!=='done');
         const newTasks = myTasks.filter(t=>!knownTaskIds.has(t.id));
         for(const t of newTasks){
-          await showPushNotification(
-            '🔴 New task assigned to you',
-            t.title,
-            'pg-new-task-' + t.id
-          );
+          // Don't notify if the current user assigned it to themselves
+          const selfAssigned = t.assignedBy && t.assignedBy === currentUser;
+          if(!selfAssigned){
+            await showPushNotification(
+              '🔴 New task assigned to you',
+              t.title,
+              'pg-new-task-' + t.id
+            );
+          }
         }
       }
     }
-    // Update known IDs
+    // Update known IDs for ALL tasks assigned to me
     const myId2 = PEOPLE.find(p=>p.name===currentUser)?.id;
     if(myId2){
       const myTaskIds = tasks.filter(t=>(t.managers||[]).includes(myId2)).map(t=>t.id);
@@ -2561,12 +2565,10 @@ function applyCurrentUser(){
   }
 
   // Show smooth notification permission banner for supers (not a jarring browser popup)
-  if(isSuperUser()){
-    showNotifBanner();
-    // If already granted, register SW silently
-    if(Notification.permission === 'granted'){
-      registerServiceWorker();
-    }
+  // Show notification banner to ALL users (not just supers)
+  showNotifBanner();
+  if(Notification.permission === 'granted'){
+    registerServiceWorker();
   }
 
   // Rebuild person filter with correct visibility
@@ -2814,7 +2816,6 @@ async function registerServiceWorker(){
 }
 
 function showNotifBanner(){
-  if(!isSuperUser()) return;
   if(!('Notification' in window)) return;
   // Already granted — nothing to do
   if(Notification.permission === 'granted') return;
@@ -3140,7 +3141,7 @@ loadTasks();
 loadBirthdays().then(()=>{ checkBirthdayNotifications(); });
 
 // Auto-refresh: 15s for superintendents (faster notification detection), 30s for office
-const REFRESH_INTERVAL = isSuperUser() ? 15000 : 30000;
+const REFRESH_INTERVAL = 15000; // 15s for everyone — fast task notification detection
 setInterval(async ()=>{
   if(!openEditId){
     Promise.all([loadPeople(), loadAllUserStatuses()]).then(()=>{ applyCurrentUser(); });
